@@ -7,7 +7,6 @@ def parse_label(file_path):
     with open(file_path) as file:
         reader = csv.reader(file, delimiter='\t')
         headers = next(reader)
-        print(headers)
         for row in reader:
             label = row[-1]
             if label not in map.keys():
