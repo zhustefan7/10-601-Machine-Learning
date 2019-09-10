@@ -23,7 +23,7 @@ def inspect(input_file, output_file):
     majority = max(map.values())
     minority = min(map.values())
     total = float(majority + minority)
-    error_rate = majority/total
+    error_rate = minority/total
     entropy = -(minority/total*math.log(minority/total,2)+majority/total*math.log(majority/total,2))
 
     output_file = open(output_file, 'w')
