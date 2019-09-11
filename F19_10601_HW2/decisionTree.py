@@ -6,13 +6,14 @@ import numpy as np
 
 
 class DecisionTree:
-    def __init__(self,left = None,right=None,decision=None,depth=0, map = None, data_stat = data_stat):
+    def __init__(self,left = None,right=None,decision=None,depth=0, map = None, data_stat = None, attribute = None):
         self.left = left
         self.right = right
         self.decision = decision
         self.depth=depth
         self.map = map
         self.data_stat = data_stat
+        self.attribute = attribute
 
 def parse_file(file_path):
     """
@@ -139,7 +140,7 @@ def split_data(map,data_stat,attribute):
 
 
 def train_stump_tree(map,data_stat,depth,all_attributes):
-    if map[0] = []:
+    if map[0] == []:
         return DecisionTree()
     #find the best attributes
     #the attribute that gives the max mutual info
@@ -150,16 +151,18 @@ def train_stump_tree(map,data_stat,depth,all_attributes):
         if curr_mutual_info >=max_mutual_info:
             max_mutual_info = curr_mutual_info
             best_attribute = attribute
-            
+    return DecisionTree(attribute=best_attribute, depth=depth)
+
+
+    # new_maps,new_data_stats = split_data(map,data_stat,best_attribute)
+
+
+def train_decision_tree(map,data_stat,max_depth=3):
+    all_attributes = map.keys()[0:-1]
+    print(all_attributes)
     
-    new_maps , new_data_stats = split_data(map,data_stat,best_attribute)
 
 
-        
-
-
-    
-# def train_decision_tree(map, data_stat,max_depth=3):
 
 
     
@@ -173,4 +176,5 @@ if __name__ == "__main__":
     # # calc_conditional_entropy(map,data_stat,0)
     # print(mutual_info)
     # print(marginal_entropy)
+    train_decision_tree(map,data_stat)
 
