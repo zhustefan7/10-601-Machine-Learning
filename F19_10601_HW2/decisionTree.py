@@ -74,7 +74,7 @@ def calc_marginal_entropy(data_stat):
     label_lengths = []
     for label_poses in label_info.values():
         label_lengths.append(len(label_poses))
-    print(label_lengths)
+    # print(label_lengths)
     majority = max(label_lengths)
     minority = min(label_lengths)
     total = float(majority + minority)
@@ -105,6 +105,8 @@ def calc_conditional_entropy(map ,data_stat,attribute):
             spec_label_idx = np.where(labels==label_type)
             #the intersection of the two indices above
             intersect_idx = np.intersect1d(data_with_spec_val_idx,spec_label_idx)
+            if len(intersect_idx)==0:
+                return 0
             #conditional probability of label being of specific value given speicific data value
             temp_prob = len(intersect_idx)/float(len(data_with_spec_val_idx))
             specific_entropy += temp_prob*math.log(temp_prob,2)
@@ -116,6 +118,8 @@ def calc_conditional_entropy(map ,data_stat,attribute):
             
 def calc_mutual_info(map,data_stat,attribute):
     conditional_entropy = calc_conditional_entropy(map,data_stat,attribute)
+    if conditional_entropy ==0:
+        return 0
     marginal_entropy = calc_marginal_entropy(data_stat)
     mutual_info = marginal_entropy - conditional_entropy
     return mutual_info
@@ -139,30 +143,65 @@ def split_data(map,data_stat,attribute):
     return new_maps , new_data_stats
 
 
-def train_stump_tree(map,data_stat,depth,all_attributes):
-    if map[0] == []:
-        return DecisionTree()
-    #find the best attributes
-    #the attribute that gives the max mutual info
-    best_attribute = 0
-    max_mutual_info = 0
-    for attribute in all_attributes:
-        curr_mutual_info = calc_mutual_info(map,data_stat,attribute)
-        if curr_mutual_info >=max_mutual_info:
-            max_mutual_info = curr_mutual_info
-            best_attribute = attribute
-    return DecisionTree(attribute=best_attribute, depth=depth)
+def get_decision(data_stat, best_attribute):
+    data_info = data_stat[best_attribute]
+    decision = None
+    best_length = 0
+    for key in data_info:
+        data_poses = data_info[key]
+        if len(data_poses)>best_length:
+            best_length = len(data_poses)
+            decision = key
+    return decision
+
+
+    
+    
+
+# def train_stump_tree(map,data_stat,depth,all_attributes):
+#     if map[0] == []:
+#         return DecisionTree()
+#     #find the best attributes
+#     #the attribute that gives the max mutual info
+#     best_attribute = 0
+#     max_mutual_info = 0
+#     for attribute in all_attributes:
+#         curr_mutual_info = calc_mutual_info(map,data_stat,attribute)
+#         if curr_mutual_info >=max_mutual_info:
+#             max_mutual_info = curr_mutual_info
+#             best_attribute = attribute
+#     all_attributes = all_attributes.remove(attribute)
+#     return DecisionTree(attribute=best_attribute, depth=depth, all_attributes = all_attributes)
 
 
     # new_maps,new_data_stats = split_data(map,data_stat,best_attribute)
 
 
-def train_decision_tree(map,data_stat,max_depth=3):
+def train_decision_tree(map,data_stat,depth=0,max_depth=3):
+    best_attribute = 0
+    max_mutual_info = 0
     all_attributes = map.keys()[0:-1]
-    print(all_attributes)
+    for attribute in all_attributes:
+        curr_mutual_info = calc_mutual_info(map,data_stat,attribute)
+        if curr_mutual_info >=max_mutual_info:
+            max_mutual_info = curr_mutual_info
+            best_attribute = attribute
+    # print('#############')
+    # print('best_attribute', best_attribute)
+    print('depth' , depth)
+    # print(data_stat[best_attribute])
+    if len(all_attributes) == 1 or depth >=max_depth or len(data_stat[best_attribute])==1:
+        decision = get_decision(data_stat, best_attribute)
+        return DecisionTree(decision=decision)
+    else:
+        new_maps , new_data_stats = split_data(map,data_stat,best_attribute)
+        new_maps[0].pop(best_attribute, None)
+        new_maps[1].pop(best_attribute, None)
+        left = train_decision_tree(map=new_maps[0],data_stat=new_data_stats[0],depth=depth+1)
+        right = train_decision_tree(map=new_maps[1],data_stat=new_data_stats[1],depth=depth+1)
+        return DecisionTree(left =left , right=right)
+
     
-
-
 
 
     
@@ -170,8 +209,12 @@ def train_decision_tree(map,data_stat,max_depth=3):
 if __name__ == "__main__":
     map = parse_file('handout/politicians_train.tsv')
     data_stat=stat_analsysis(map)
-    new_maps , new_data_stats = split_data(map,data_stat,7)
-    # mutual_info = calc_mutual_info(map, data_stat, 3)
+
+
+    # new_maps , new_data_stats = split_data(map,data_stat,7)
+    # mutual_info = calc_mutual_info(map, data_stat, 0)
+    # print(mutual_info)
+
     # marginal_entropy=calc_marginal_entropy(data_stat)
     # # calc_conditional_entropy(map,data_stat,0)
     # print(mutual_info)
