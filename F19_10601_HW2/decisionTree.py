@@ -2,6 +2,7 @@ from inspect import*
 import csv
 import math
 import numpy as np
+from collections import OrderedDict 
 
 
 
@@ -20,15 +21,16 @@ def parse_file(file_path):
     parses the tsv file and stores all the data of each attributes in a list 
     and map them to the column number of the corresponding attributes  
     """  
-    map = {}
+    map = OrderedDict() 
     with open(file_path) as file:
         reader = csv.reader(file, delimiter='\t')
         headers = next(reader)
         for i in range(len(headers)):
-            map[i]=np.array([])
+            # print(headers[i])
+            map[headers[i]]=np.array([])
         for row in reader:
             for i in range(len(row)):
-                map[i]=np.append(map[i],row[i])
+                map[headers[i]]=np.append(map[headers[i]],row[i])
     # print(map)
     return map
 
@@ -38,7 +40,7 @@ def stat_analsysis(map):
     returns a dict which summarizes the data type and the count of each data 
     type for each of the attributes
     """
-    data_stat = {}
+    data_stat = OrderedDict()
     for key in map:
         data_dict = {}
         for i in range(len(map[key])):
@@ -69,7 +71,7 @@ def calc_marginal_entropy(data_stat):
     """
     calculates the marginal entropy of the labels of each data sheet
     """
-    label_col = len(data_stat)-1
+    label_col = data_stat.keys()[-1]
     label_info = data_stat[label_col]
     label_lengths = []
     for label_poses in label_info.values():
@@ -90,7 +92,9 @@ def calc_conditional_entropy(map ,data_stat,attribute):
     #acquire the data info of the attribute stored in data_stat
     data_info = data_stat[attribute]
     #acquire the label info
-    label_col = len(data_stat)-1
+    # label_col = len(data_stat)-1
+    label_col = data_stat.keys()[-1]
+    # print(data_stat.keys())
     label_info = data_stat[label_col]
     #acquire the data 
     data = map[attribute]
@@ -130,16 +134,12 @@ def split_data(map,data_stat,attribute):
     new_data_stats=[]
     #acquiring the poses of different data values of an attribute
     for data_poses in data_stat[attribute].values():
-        new_map ={}
+        new_map =OrderedDict()
         for key in map.keys():  
             new_map[key] = map[key][data_poses]
             new_data_stat = stat_analsysis(new_map)
         new_maps.append(new_map)
         new_data_stats.append(new_data_stat)
-        # print(len(new_map[key]))
-        # print(new_map[key])
-        # print('########')
-        # print(new_data_stats[key])
     return new_maps , new_data_stats
 
 
@@ -155,29 +155,8 @@ def get_decision(data_stat, best_attribute):
     return decision
 
 
-    
-    
 
-# def train_stump_tree(map,data_stat,depth,all_attributes):
-#     if map[0] == []:
-#         return DecisionTree()
-#     #find the best attributes
-#     #the attribute that gives the max mutual info
-#     best_attribute = 0
-#     max_mutual_info = 0
-#     for attribute in all_attributes:
-#         curr_mutual_info = calc_mutual_info(map,data_stat,attribute)
-#         if curr_mutual_info >=max_mutual_info:
-#             max_mutual_info = curr_mutual_info
-#             best_attribute = attribute
-#     all_attributes = all_attributes.remove(attribute)
-#     return DecisionTree(attribute=best_attribute, depth=depth, all_attributes = all_attributes)
-
-
-    # new_maps,new_data_stats = split_data(map,data_stat,best_attribute)
-
-
-def train_decision_tree(map,data_stat,depth=0,max_depth=3):
+def train_decision_tree(map,data_stat,depth=1,max_depth=3):
     best_attribute = 0
     max_mutual_info = 0
     all_attributes = map.keys()[0:-1]
@@ -186,10 +165,7 @@ def train_decision_tree(map,data_stat,depth=0,max_depth=3):
         if curr_mutual_info >=max_mutual_info:
             max_mutual_info = curr_mutual_info
             best_attribute = attribute
-    # print('#############')
-    # print('best_attribute', best_attribute)
-    print('depth' , depth)
-    # print(data_stat[best_attribute])
+    printer(map,data_stat,depth,best_attribute)
     if len(all_attributes) == 1 or depth >=max_depth or len(data_stat[best_attribute])==1:
         decision = get_decision(data_stat, best_attribute)
         return DecisionTree(decision=decision)
@@ -201,18 +177,40 @@ def train_decision_tree(map,data_stat,depth=0,max_depth=3):
         right = train_decision_tree(map=new_maps[1],data_stat=new_data_stats[1],depth=depth+1)
         return DecisionTree(left =left , right=right)
 
-    
+
+def printer(map,data_stat,depth,best_attribute):
+    label_col = data_stat.keys()[-1] 
+    if depth ==1:
+        print_list1 = []
+        for label in data_stat[label_col]:
+            print_list1.append(len(data_stat[label_col][label]))
+            print_list1.append(label)
+        print('[{} {} / {} {}]').format(print_list1[0],print_list1[1],print_list1[2],print_list1[3])
+
+    for key in data_stat[best_attribute]:
+        print_list = []
+        for label in data_stat[label_col]:
+            intersect = np.intersect1d(data_stat[best_attribute][key], data_stat[label_col][label])
+            print_list.append(len(intersect))
+            print_list.append(label)
+        # print(print_list)
+
+        print(' | '*depth+str(best_attribute)+'[{} {} / {} {}]').format(print_list[0],print_list[1],print_list[2],print_list[3])
+
+
+
 
 
     
         
 if __name__ == "__main__":
-    map = parse_file('handout/politicians_train.tsv')
+    map = parse_file('handout/education_train.tsv')
+    # print(map.keys())
     data_stat=stat_analsysis(map)
 
 
     # new_maps , new_data_stats = split_data(map,data_stat,7)
-    # mutual_info = calc_mutual_info(map, data_stat, 0)
+    # mutual_info = calc_mutual_info(map, data_stat, 'Superfund_right_to_sue')
     # print(mutual_info)
 
     # marginal_entropy=calc_marginal_entropy(data_stat)
