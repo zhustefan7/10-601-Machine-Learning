@@ -168,14 +168,20 @@ def train_decision_tree(map,data_stat,depth=1,max_depth=3):
     printer(map,data_stat,depth,best_attribute)
     if len(all_attributes) == 1 or depth >=max_depth or len(data_stat[best_attribute])==1:
         decision = get_decision(data_stat, best_attribute)
-        return DecisionTree(decision=decision)
+        return DecisionTree(decision=decision, attribute=best_attribute, depth = depth)
     else:
         new_maps , new_data_stats = split_data(map,data_stat,best_attribute)
         new_maps[0].pop(best_attribute, None)
         new_maps[1].pop(best_attribute, None)
-        left = train_decision_tree(map=new_maps[0],data_stat=new_data_stats[0],depth=depth+1)
-        right = train_decision_tree(map=new_maps[1],data_stat=new_data_stats[1],depth=depth+1)
-        return DecisionTree(left =left , right=right)
+        left_data_stat = new_data_stats[0]
+        right_data_stat = new_data_stats[1]
+        # decision_left = get_decision(left_data_stat,best_attribute)
+        # decision_right = get_decision(right_data_stat,best_attribute)
+        decision = get_decision(data_stat, best_attribute)
+        left = train_decision_tree(map=new_maps[0],data_stat=left_data_stat,depth=depth+1)
+        right = train_decision_tree(map=new_maps[1],data_stat=right_data_stat,depth=depth+1)
+        return DecisionTree(left=left , right=right, attribute=best_attribute, decision=decision,depth=depth)
+
 
 
 def printer(map,data_stat,depth,best_attribute):
@@ -200,6 +206,25 @@ def printer(map,data_stat,depth,best_attribute):
 
 
 
+def tree_traversal(DecisionTree):
+    if DecisionTree == None:
+        return
+    map = DecisionTree.map
+    data_stat=DecisionTree.data_stat
+    depth=DecisionTree.depth
+    attribute = DecisionTree.attribute
+    decsion = DecisionTree.decision
+
+    if DecisionTree != None:
+        print('depth',depth, 'attribute',attribute,decsion)
+        tree_traversal(DecisionTree.left)
+        tree_traversal(DecisionTree.right)
+
+
+
+# def classification(map,DecisionTree):
+  
+
 
     
         
@@ -217,5 +242,7 @@ if __name__ == "__main__":
     # # calc_conditional_entropy(map,data_stat,0)
     # print(mutual_info)
     # print(marginal_entropy)
-    train_decision_tree(map,data_stat)
+    DecisionTree = train_decision_tree(map,data_stat)
+    # print(DecisionTree.left.left.depth)
+    tree_traversal(DecisionTree)
 
