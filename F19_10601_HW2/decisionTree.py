@@ -174,7 +174,7 @@ def train_decision_tree(map,data_stat,depth=1,max_depth=3):
         if curr_mutual_info >=max_mutual_info:
             max_mutual_info = curr_mutual_info
             best_attribute = attribute
-    printer(map,data_stat,depth,best_attribute)
+    # printer(map,data_stat,depth,best_attribute)
     if len(all_attributes) == 1 or depth >=max_depth or len(data_stat[best_attribute])==1:
         decision = get_decision(data_stat, best_attribute)
         return DecisionTree(decision=decision, attribute=best_attribute, depth = depth)
@@ -214,7 +214,6 @@ def printer(map,data_stat,depth,best_attribute):
 
 
 
-
 def tree_traversal(DecisionTree):
     if DecisionTree == None:
         return
@@ -251,8 +250,7 @@ def classification(map,DecisionTree):
     return result
 
  
-def cal_error_rate(DecisionTree,map):
-    classification_result = classification(map,DecisionTree)
+def cal_error_rate(map,classification_result):
     label_col = data_stat.keys()[-1] 
     labels = map[label_col]
     matched_count = 0 
@@ -264,7 +262,15 @@ def cal_error_rate(DecisionTree,map):
     return error_rate
     # print(labels-classification_result)
 
-    
+
+def main(train_file, test_file, train_labels,test_labels,metrics_file):
+    training_map = parse_file(train_file)
+    testing_map = parse_file(test_file)
+    data_stat=stat_analsysis(training_map)
+    DecisionTree = train_decision_tree(training_map,data_stat)
+    train_classification = classification(training_map, DecisionTree)
+    test_classification = classification(testing_map,DecisionTree)
+    train_error = cal_error_rate(training_map,train_classification)
         
 if __name__ == "__main__":
     training_map = parse_file('handout/small_train.tsv')
@@ -284,9 +290,10 @@ if __name__ == "__main__":
     DecisionTree = train_decision_tree(training_map,data_stat)
     # decision = classification_per_row(testing_map,DecisionTree,3)
     # print(decision)
-    # result =  classification(training_map,DecisionTree)
+    map = testing_map
+    result =  classification(map,DecisionTree)
     # print(result)
-    cal_error_rate(DecisionTree,testing_map)
+    cal_error_rate(map, result)
     # print(DecisionTree.right_route_val)
-    # tree_traversal(DecisionTree)
+    tree_traversal(DecisionTree)
 
