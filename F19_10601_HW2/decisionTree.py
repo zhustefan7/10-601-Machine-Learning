@@ -3,6 +3,7 @@ import csv
 import math
 import numpy as np
 from collections import OrderedDict 
+import sys
 
 
 
@@ -250,50 +251,90 @@ def classification(map,DecisionTree):
     return result
 
  
-def cal_error_rate(map,classification_result):
+def cal_error_rate(map,classification_result, data_stat):
     label_col = data_stat.keys()[-1] 
     labels = map[label_col]
     matched_count = 0 
     for i in range(len(labels)):
+        # print(labels[i], classification_result[i])
         if labels[i] == classification_result[i]:
             matched_count+=1
-    error_rate = (len(labels)-matched_count)/float(matched_count)
+    error_rate = (len(labels)-matched_count)/float(len(labels))
     print(error_rate)
     return error_rate
-    # print(labels-classification_result)
 
-
-def main(train_file, test_file, train_labels,test_labels,metrics_file):
+def main(train_file, test_file, train_labels,max_depth,test_labels,metrics_file):
     training_map = parse_file(train_file)
     testing_map = parse_file(test_file)
     data_stat=stat_analsysis(training_map)
-    DecisionTree = train_decision_tree(training_map,data_stat)
+    DecisionTree = train_decision_tree(training_map,data_stat,max_depth = max_depth)
     train_classification = classification(training_map, DecisionTree)
     test_classification = classification(testing_map,DecisionTree)
-    train_error = cal_error_rate(training_map,train_classification)
+    train_error = cal_error_rate(training_map,train_classification,data_stat)
+    test_error= cal_error_rate(testing_map,test_classification,data_stat)
+
+    #writing the training label file
+    train_label_file = open(train_labels, 'w')
+    # print(train_classification)
+    train_label_file.writelines("%s\n" % label for label in train_classification)
+    train_label_file.close()
+    #writing the testing label file
+    test_label_file = open(test_labels, 'w')
+    test_label_file.writelines("%s\n" % label for label in test_classification)
+    test_label_file.close()
+    #Writing the metric file
+    metrics_file = open(metrics_file, 'w')
+    metrics_file.write('error(train):%f\n'% train_error)
+    metrics_file.write('error(test):%f'% test_error)
+    metrics_file.close()
+
+
+
+
+
         
 if __name__ == "__main__":
-    training_map = parse_file('handout/small_train.tsv')
-    testing_map = parse_file('handout/small_test.tsv')
-    # print(map.keys())
-    data_stat=stat_analsysis(training_map)
+#     training_map = parse_file('handout/small_train.tsv')
+#     testing_map = parse_file('handout/small_test.tsv')
+#     # print(map.keys())
+#     data_stat=stat_analsysis(training_map)
 
 
-    # new_maps , new_data_stats = split_data(map,data_stat,7)
-    # mutual_info = calc_mutual_info(map, data_stat, 'Superfund_right_to_sue')
-    # print(mutual_info)
+#     # new_maps , new_data_stats = split_data(map,data_stat,7)
+#     # mutual_info = calc_mutual_info(map, data_stat, 'Superfund_right_to_sue')
+#     # print(mutual_info)
 
-    # marginal_entropy=calc_marginal_entropy(data_stat)
-    # # calc_conditional_entropy(map,data_stat,0)
-    # print(mutual_info)
-    # print(marginal_entropy)
-    DecisionTree = train_decision_tree(training_map,data_stat)
-    # decision = classification_per_row(testing_map,DecisionTree,3)
-    # print(decision)
-    map = testing_map
-    result =  classification(map,DecisionTree)
-    # print(result)
-    cal_error_rate(map, result)
-    # print(DecisionTree.right_route_val)
-    tree_traversal(DecisionTree)
+#     # marginal_entropy=calc_marginal_entropy(data_stat)
+#     # # calc_conditional_entropy(map,data_stat,0)
+#     # print(mutual_info)
+#     # print(marginal_entropy)
+#     DecisionTree = train_decision_tree(training_map,data_stat)
+#     # decision = classification_per_row(testing_map,DecisionTree,3)
+#     # print(decision)
+#     map = testing_map
+#     result =  classification(map,DecisionTree)
+#     # print(result)
+#     cal_error_rate(map, result)
+#     # print(DecisionTree.right_route_val)
+#     tree_traversal(DecisionTree)
+    train_file = sys.argv[1]
+    test_file = sys.argv[2]
+    max_depth = sys.argv[3]
+    train_labels = sys.argv[4]
+    test_labels = sys.argv[5]
+    metric_file = sys.argv[6]
+
+
+
+
+
+
+    train_file = 'handout/small_train.tsv'
+    test_file = 'handout/small_test.tsv'
+    train_labels = 'pol_3_train.labels'
+    test_labels = 'pol_3_test.labels'
+    metric_file = 'pol_3_metrics.txt'
+    max_depth = 3
+    main(train_file, test_file, train_labels,max_depth,test_labels,metric_file)
+
 
