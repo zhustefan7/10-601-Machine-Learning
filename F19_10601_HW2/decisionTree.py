@@ -7,7 +7,8 @@ from collections import OrderedDict
 
 
 class DecisionTree:
-    def __init__(self,left = None,right=None,decision=None,depth=0, map = None, data_stat = None, attribute = None):
+    def __init__(self,left = None,right=None,decision=None,depth=0, \
+        map = None, data_stat = None, attribute = None, left_route_val = None, right_route_val = None):
         self.left = left
         self.right = right
         self.decision = decision
@@ -15,6 +16,8 @@ class DecisionTree:
         self.map = map
         self.data_stat = data_stat
         self.attribute = attribute
+        self.left_route_val = left_route_val
+        self.right_route_val = right_route_val
 
 def parse_file(file_path):
     """
@@ -132,6 +135,11 @@ def calc_mutual_info(map,data_stat,attribute):
 def split_data(map,data_stat,attribute):
     new_maps = []
     new_data_stats=[]
+    route_vals=[]
+    for key in data_stat[attribute]:
+        route_vals.append(key)
+
+
     #acquiring the poses of different data values of an attribute
     for data_poses in data_stat[attribute].values():
         new_map =OrderedDict()
@@ -140,11 +148,12 @@ def split_data(map,data_stat,attribute):
             new_data_stat = stat_analsysis(new_map)
         new_maps.append(new_map)
         new_data_stats.append(new_data_stat)
-    return new_maps , new_data_stats
+    return new_maps , new_data_stats, route_vals
 
 
 def get_decision(data_stat, best_attribute):
-    data_info = data_stat[best_attribute]
+    label_col = data_stat.keys()[-1]
+    data_info = data_stat[label_col]
     decision = None
     best_length = 0
     for key in data_info:
@@ -170,17 +179,17 @@ def train_decision_tree(map,data_stat,depth=1,max_depth=3):
         decision = get_decision(data_stat, best_attribute)
         return DecisionTree(decision=decision, attribute=best_attribute, depth = depth)
     else:
-        new_maps , new_data_stats = split_data(map,data_stat,best_attribute)
+        new_maps , new_data_stats ,route_vals= split_data(map,data_stat,best_attribute)
         new_maps[0].pop(best_attribute, None)
         new_maps[1].pop(best_attribute, None)
         left_data_stat = new_data_stats[0]
         right_data_stat = new_data_stats[1]
-        # decision_left = get_decision(left_data_stat,best_attribute)
-        # decision_right = get_decision(right_data_stat,best_attribute)
+        left_route_val, right_route_val = route_vals[0], route_vals[1]
         decision = get_decision(data_stat, best_attribute)
         left = train_decision_tree(map=new_maps[0],data_stat=left_data_stat,depth=depth+1)
         right = train_decision_tree(map=new_maps[1],data_stat=right_data_stat,depth=depth+1)
-        return DecisionTree(left=left , right=right, attribute=best_attribute, decision=decision,depth=depth)
+        return DecisionTree(left=left , right=right, \
+            attribute=best_attribute, decision=decision,depth=depth, left_route_val= left_route_val, right_route_val=right_route_val)
 
 
 
@@ -213,25 +222,55 @@ def tree_traversal(DecisionTree):
     data_stat=DecisionTree.data_stat
     depth=DecisionTree.depth
     attribute = DecisionTree.attribute
-    decsion = DecisionTree.decision
-
+    decision = DecisionTree.decision
     if DecisionTree != None:
-        print('depth',depth, 'attribute',attribute,decsion)
+        print('depth',depth, 'attribute',attribute,decision)
         tree_traversal(DecisionTree.left)
         tree_traversal(DecisionTree.right)
 
 
 
-# def classification(map,DecisionTree):
-  
+def classification_per_row(map,DecisionTree,index):
+    attribute = DecisionTree.attribute
+    if DecisionTree.left== None and DecisionTree.right== None:
+        # print(DecisionTree.decision)
+        # print(DecisionTree.depth)
+        decision = DecisionTree.decision
+        return decision
+    else:
+        if DecisionTree.left_route_val == map[attribute][index]:
+            return classification_per_row(map,DecisionTree.left,index)
+        else:
+            return classification_per_row(map,DecisionTree.right, index)
 
+def classification(map,DecisionTree):
+    result = []
+    for i in range(len(map[map.keys()[0]])):
+        decision = classification_per_row(map,DecisionTree,i)
+        result.append(decision)
+    return result
+
+ 
+def cal_error_rate(DecisionTree,map):
+    classification_result = classification(map,DecisionTree)
+    label_col = data_stat.keys()[-1] 
+    labels = map[label_col]
+    matched_count = 0 
+    for i in range(len(labels)):
+        if labels[i] == classification_result[i]:
+            matched_count+=1
+    error_rate = (len(labels)-matched_count)/float(matched_count)
+    print(error_rate)
+    return error_rate
+    # print(labels-classification_result)
 
     
         
 if __name__ == "__main__":
-    map = parse_file('handout/education_train.tsv')
+    training_map = parse_file('handout/small_train.tsv')
+    testing_map = parse_file('handout/small_test.tsv')
     # print(map.keys())
-    data_stat=stat_analsysis(map)
+    data_stat=stat_analsysis(training_map)
 
 
     # new_maps , new_data_stats = split_data(map,data_stat,7)
@@ -242,7 +281,12 @@ if __name__ == "__main__":
     # # calc_conditional_entropy(map,data_stat,0)
     # print(mutual_info)
     # print(marginal_entropy)
-    DecisionTree = train_decision_tree(map,data_stat)
-    # print(DecisionTree.left.left.depth)
-    tree_traversal(DecisionTree)
+    DecisionTree = train_decision_tree(training_map,data_stat)
+    # decision = classification_per_row(testing_map,DecisionTree,3)
+    # print(decision)
+    # result =  classification(training_map,DecisionTree)
+    # print(result)
+    cal_error_rate(DecisionTree,testing_map)
+    # print(DecisionTree.right_route_val)
+    # tree_traversal(DecisionTree)
 
