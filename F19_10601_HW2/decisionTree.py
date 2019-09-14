@@ -169,7 +169,7 @@ def get_decision(data_stat, best_attribute):
 
 
 
-def train_decision_tree(map,data_stat,depth=1,max_depth=3):
+def train_decision_tree(map,data_stat,max_depth, depth=1):
     best_attribute = 0
     max_mutual_info = 0
     all_attributes = map.keys()[0:-1]
@@ -178,8 +178,12 @@ def train_decision_tree(map,data_stat,depth=1,max_depth=3):
         if curr_mutual_info >=max_mutual_info:
             max_mutual_info = curr_mutual_info
             best_attribute = attribute
-    # printer(map,data_stat,depth,best_attribute)
-    if len(all_attributes) == 1 or depth >=max_depth or len(data_stat[best_attribute])==1:
+    printer(map,data_stat,depth,best_attribute)
+    # print(depth, max_depth)
+    if len(all_attributes) == 0 or depth >=max_depth or len(data_stat[best_attribute])==1:
+        # print(depth, max_depth)
+        # print(depth>=max_depth)
+        # print(type(max_depth))
         decision = get_decision(data_stat, best_attribute)
         return DecisionTree(decision=decision, attribute=best_attribute, depth = depth)
     else:
@@ -190,8 +194,8 @@ def train_decision_tree(map,data_stat,depth=1,max_depth=3):
         right_data_stat = new_data_stats[1]
         left_route_val, right_route_val = route_vals[0], route_vals[1]
         decision = get_decision(data_stat, best_attribute)
-        left = train_decision_tree(map=new_maps[0],data_stat=left_data_stat,depth=depth+1)
-        right = train_decision_tree(map=new_maps[1],data_stat=right_data_stat,depth=depth+1)
+        left = train_decision_tree(new_maps[0],left_data_stat,max_depth,depth=depth+1)
+        right = train_decision_tree(new_maps[1],right_data_stat,max_depth,depth=depth+1)
         return DecisionTree(left=left , right=right, \
             attribute=best_attribute, decision=decision,depth=depth, left_route_val= left_route_val, right_route_val=right_route_val)
 
@@ -212,6 +216,7 @@ def printer(map,data_stat,depth,best_attribute):
             intersect = np.intersect1d(data_stat[best_attribute][key], data_stat[label_col][label])
             print_list.append(len(intersect))
             print_list.append(label)
+        # print(depth)
         # print(print_list)
 
         print(' | '*depth+str(best_attribute)+'[{} {} / {} {}]').format(print_list[0],print_list[1],print_list[2],print_list[3])
@@ -228,6 +233,7 @@ def tree_traversal(DecisionTree):
     decision = DecisionTree.decision
     if DecisionTree != None:
         print('depth',depth, 'attribute',attribute,decision)
+        # tree_traversal(DecisionTree)
         tree_traversal(DecisionTree.left)
         tree_traversal(DecisionTree.right)
 
@@ -258,7 +264,7 @@ def cal_error_rate(map,classification_result, label_col):
     labels = map[label_col]
     matched_count = 0 
     for i in range(len(labels)):
-        print(labels[i], classification_result[i])
+        # print(labels[i], classification_result[i])
         if labels[i] == classification_result[i]:
             matched_count+=1
     error_rate = (len(labels)-matched_count)/float(len(labels))
@@ -270,7 +276,8 @@ def main(train_file, test_file, train_labels,max_depth,test_labels,metrics_file)
     testing_map = parse_file(test_file)
     data_stat=stat_analsysis(training_map)
     label_col = data_stat.keys()[-1] 
-    DecisionTree = train_decision_tree(training_map,data_stat,max_depth = max_depth)
+    DecisionTree = train_decision_tree(training_map,data_stat,max_depth)
+    tree_traversal(DecisionTree)
     train_classification = classification(training_map, DecisionTree)
     test_classification = classification(testing_map,DecisionTree)
     train_error = cal_error_rate(training_map,train_classification,label_col)
@@ -321,10 +328,10 @@ if __name__ == "__main__":
 #     # print(result)
 #     cal_error_rate(map, result)
 #     # print(DecisionTree.right_route_val)
-#     tree_traversal(DecisionTree)
+    # tree_traversal(DecisionTree)
     train_file = sys.argv[1]
     test_file = sys.argv[2]
-    max_depth = sys.argv[3]
+    max_depth = int(sys.argv[3])
     train_labels = sys.argv[4]
     test_labels = sys.argv[5]
     metric_file = sys.argv[6]
