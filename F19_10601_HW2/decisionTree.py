@@ -324,17 +324,12 @@ if __name__ == "__main__":
     test_labels = sys.argv[5]
     metric_file = sys.argv[6]
 
-
-
-
-
-
-    train_file = 'handout/small_train.tsv'
-    test_file = 'handout/small_test.tsv'
-    train_labels = 'pol_3_train.labels'
-    test_labels = 'pol_3_test.labels'
-    metric_file = 'pol_3_metrics.txt'
-    max_depth = 3
+    # train_file = 'handout/small_train.tsv'
+    # test_file = 'handout/small_test.tsv'
+    # train_labels = 'pol_3_train.labels'
+    # test_labels = 'pol_3_test.labels'
+    # metric_file = 'pol_3_metrics.txt'
+    # max_depth = 3
     main(train_file, test_file, train_labels,max_depth,test_labels,metric_file)
 
 
