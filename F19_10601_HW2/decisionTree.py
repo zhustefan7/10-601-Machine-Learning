@@ -89,7 +89,7 @@ def calc_marginal_entropy(data_stat):
 
 
 
-def calc_conditional_entropy(map ,data_stat,attribute):
+def calc_conditional_entropy(map,data_stat,attribute):
     """
     calculates the conditional entropy of a specific attribute
     """
@@ -108,26 +108,29 @@ def calc_conditional_entropy(map ,data_stat,attribute):
         specific_entropy = 0
         for label_type in label_info:  
             #attribute data indices where all data entries are equal to a speicifc value
-            data_with_spec_val_idx = np.where(data==data_type)[0]
+            data_with_spec_val_idx = data_info[data_type]
             #label indices where all labels are of same value
-            spec_label_idx = np.where(labels==label_type)
+            spec_label_idx = label_info[label_type]
             #the intersection of the two indices above
             intersect_idx = np.intersect1d(data_with_spec_val_idx,spec_label_idx)
-            if len(intersect_idx)==0:
-                return 0
+
+            # if len(intersect_idx)==0:
+            #     return 0
             #conditional probability of label being of specific value given speicific data value
             temp_prob = len(intersect_idx)/float(len(data_with_spec_val_idx))
-            specific_entropy += temp_prob*math.log(temp_prob,2)
+            # print(len(intersect_idx))
+            if temp_prob!=0:
+                specific_entropy += temp_prob*math.log(temp_prob,2)
+        # print(len(intersect_idx),'specific entropy',specific_entropy)
         specific_entropy = -specific_entropy
         prob = len(data_with_spec_val_idx)/float(len(data))
         conditional_entropy += prob * specific_entropy
-    
     return conditional_entropy
             
 def calc_mutual_info(map,data_stat,attribute):
     conditional_entropy = calc_conditional_entropy(map,data_stat,attribute)
-    if conditional_entropy ==0:
-        return 0
+    # if conditional_entropy ==0:
+    #     return 0
     marginal_entropy = calc_marginal_entropy(data_stat)
     mutual_info = marginal_entropy - conditional_entropy
     return mutual_info
@@ -251,12 +254,11 @@ def classification(map,DecisionTree):
     return result
 
  
-def cal_error_rate(map,classification_result, data_stat):
-    label_col = data_stat.keys()[-1] 
+def cal_error_rate(map,classification_result, label_col):
     labels = map[label_col]
     matched_count = 0 
     for i in range(len(labels)):
-        # print(labels[i], classification_result[i])
+        print(labels[i], classification_result[i])
         if labels[i] == classification_result[i]:
             matched_count+=1
     error_rate = (len(labels)-matched_count)/float(len(labels))
@@ -267,21 +269,24 @@ def main(train_file, test_file, train_labels,max_depth,test_labels,metrics_file)
     training_map = parse_file(train_file)
     testing_map = parse_file(test_file)
     data_stat=stat_analsysis(training_map)
+    label_col = data_stat.keys()[-1] 
     DecisionTree = train_decision_tree(training_map,data_stat,max_depth = max_depth)
     train_classification = classification(training_map, DecisionTree)
     test_classification = classification(testing_map,DecisionTree)
-    train_error = cal_error_rate(training_map,train_classification,data_stat)
-    test_error= cal_error_rate(testing_map,test_classification,data_stat)
+    train_error = cal_error_rate(training_map,train_classification,label_col)
+    test_error= cal_error_rate(testing_map,test_classification,label_col)
 
     #writing the training label file
     train_label_file = open(train_labels, 'w')
     # print(train_classification)
     train_label_file.writelines("%s\n" % label for label in train_classification)
     train_label_file.close()
+
     #writing the testing label file
     test_label_file = open(test_labels, 'w')
     test_label_file.writelines("%s\n" % label for label in test_classification)
     test_label_file.close()
+
     #Writing the metric file
     metrics_file = open(metrics_file, 'w')
     metrics_file.write('error(train):%f\n'% train_error)

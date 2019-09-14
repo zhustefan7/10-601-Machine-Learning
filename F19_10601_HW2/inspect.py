@@ -36,9 +36,9 @@ def inspect(input_file, output_file):
 
 
 if __name__ =="__main__":
-    # infile = sys.argv[1]
-    # outfile = sys.argv[2]
+    infile = sys.argv[1]
+    outfile = sys.argv[2]
     # print ("The input file is : % s " % (infile))
     # print ("The output file is : % s " % (outfile))
-    # inspect(infile , outfile)
-    inspect('handout/politicians_train.tsv' , 'politician_inspect.txt')
+    inspect(infile , outfile)
+    # inspect('handout/politicians_train.tsv' , 'politician_inspect.txt')
