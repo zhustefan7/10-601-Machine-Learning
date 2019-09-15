@@ -6,7 +6,6 @@ from collections import OrderedDict
 import sys
 
 
-
 class DecisionTree:
     def __init__(self,left = None,right=None,decision=None,depth=0, \
         map = None, data_stat = None, attribute = None, left_route_val = None, right_route_val = None):
@@ -35,7 +34,6 @@ def parse_file(file_path):
         for row in reader:
             for i in range(len(row)):
                 map[headers[i]]=np.append(map[headers[i]],row[i])
-    # print(map)
     return map
 
 
@@ -113,9 +111,6 @@ def calc_conditional_entropy(map,data_stat,attribute):
             spec_label_idx = label_info[label_type]
             #the intersection of the two indices above
             intersect_idx = np.intersect1d(data_with_spec_val_idx,spec_label_idx)
-
-            # if len(intersect_idx)==0:
-            #     return 0
             #conditional probability of label being of specific value given speicific data value
             temp_prob = len(intersect_idx)/float(len(data_with_spec_val_idx))
             # print(len(intersect_idx))
@@ -140,17 +135,18 @@ def split_data(map,data_stat,attribute):
     new_maps = []
     new_data_stats=[]
     route_vals=[]
+    if attribute == 0:
+        return [None, None] , [None, None], [None,None]
+
     for key in data_stat[attribute]:
         route_vals.append(key)
-
-
     #acquiring the poses of different data values of an attribute
     for data_poses in data_stat[attribute].values():
         new_map =OrderedDict()
         for key in map.keys():  
             new_map[key] = map[key][data_poses]
-            new_data_stat = stat_analsysis(new_map)
         new_maps.append(new_map)
+        new_data_stat = stat_analsysis(new_map)
         new_data_stats.append(new_data_stat)
     return new_maps , new_data_stats, route_vals
 
@@ -178,26 +174,29 @@ def train_decision_tree(map,data_stat,max_depth, depth=1):
         if curr_mutual_info >=max_mutual_info:
             max_mutual_info = curr_mutual_info
             best_attribute = attribute
-    printer(map,data_stat,depth,best_attribute)
+    # printer(map,data_stat,depth,best_attribute)
     # print(depth, max_depth)
     if len(all_attributes) == 0 or depth >=max_depth or len(data_stat[best_attribute])==1:
-        # print(depth, max_depth)
-        # print(depth>=max_depth)
-        # print(type(max_depth))
-        decision = get_decision(data_stat, best_attribute)
-        return DecisionTree(decision=decision, attribute=best_attribute, depth = depth)
+        new_maps , new_data_stats ,route_vals= split_data(map,data_stat,best_attribute)
+        decision = get_decision(data_stat , best_attribute)
+        if len(route_vals)>1:
+            left_route_val, right_route_val = route_vals[0], route_vals[1]
+            return DecisionTree(decision=decision, attribute=best_attribute, depth = depth \
+                ,left_route_val=left_route_val, right_route_val=right_route_val,data_stat=data_stat)
+        else:
+            return DecisionTree(decision=decision, attribute=best_attribute, depth = depth ,\
+                left_route_val=route_vals[0],data_stat=data_stat)
     else:
         new_maps , new_data_stats ,route_vals= split_data(map,data_stat,best_attribute)
         new_maps[0].pop(best_attribute, None)
         new_maps[1].pop(best_attribute, None)
-        left_data_stat = new_data_stats[0]
-        right_data_stat = new_data_stats[1]
+        left_data_stat,right_data_stat = new_data_stats[0],new_data_stats[1]
         left_route_val, right_route_val = route_vals[0], route_vals[1]
         decision = get_decision(data_stat, best_attribute)
         left = train_decision_tree(new_maps[0],left_data_stat,max_depth,depth=depth+1)
         right = train_decision_tree(new_maps[1],right_data_stat,max_depth,depth=depth+1)
         return DecisionTree(left=left , right=right, \
-            attribute=best_attribute, decision=decision,depth=depth, left_route_val= left_route_val, right_route_val=right_route_val)
+            attribute=best_attribute, decision=decision,depth=depth, left_route_val= left_route_val, right_route_val=right_route_val,data_stat=data_stat)
 
 
 
@@ -216,27 +215,44 @@ def printer(map,data_stat,depth,best_attribute):
             intersect = np.intersect1d(data_stat[best_attribute][key], data_stat[label_col][label])
             print_list.append(len(intersect))
             print_list.append(label)
-        # print(depth)
-        # print(print_list)
-
         print(' | '*depth+str(best_attribute)+'[{} {} / {} {}]').format(print_list[0],print_list[1],print_list[2],print_list[3])
 
+def printer_helper(DecisionTree):
+    data_stat=DecisionTree.data_stat
+    depth=DecisionTree.depth
+    attribute = DecisionTree.attribute
+    # print(data_stat)
+    label_col = data_stat.keys()[-1] 
+    for key in data_stat[attribute]:
+        print_list = []
+        for label in data_stat[label_col]:
+            intersect = np.intersect1d(data_stat[attribute][key], data_stat[label_col][label])
+            print_list.append(len(intersect))
+            print_list.append(label)
+    return print_list
 
 
 def tree_traversal(DecisionTree):
     if DecisionTree == None:
         return
-    map = DecisionTree.map
-    data_stat=DecisionTree.data_stat
-    depth=DecisionTree.depth
-    attribute = DecisionTree.attribute
-    decision = DecisionTree.decision
-    if DecisionTree != None:
-        print('depth',depth, 'attribute',attribute,decision)
-        # tree_traversal(DecisionTree)
-        tree_traversal(DecisionTree.left)
-        tree_traversal(DecisionTree.right)
 
+    if DecisionTree != None:
+        depth=DecisionTree.depth
+        attribute = DecisionTree.attribute
+        print_list = printer_helper(DecisionTree)
+
+        if len(print_list)==4:    
+            print(' | '*depth+'{}={}:'+'[{} {} / {} {}]').format(attribute,DecisionTree.left_route_val,print_list[0],print_list[1],print_list[2],print_list[3])
+        else:
+            print(' | '*depth+'{}={}:'+'[]').format(attribute,DecisionTree.left_route_val)
+            
+        tree_traversal(DecisionTree.left)
+        if len(print_list)==4:    
+            print(' | '*depth+'{}={}:'+'[{} {} / {} {}]').format(attribute,DecisionTree.right_route_val,print_list[0],print_list[1],print_list[2],print_list[3])
+        else:
+            print(' | '*depth+'{}={}:'+'[]').format(attribute,DecisionTree.right_route_val)
+        # print(' | '*depth+'{}={}').format(attribute,DecisionTree.right_route_val)
+        tree_traversal(DecisionTree.right)
 
 
 def classification_per_row(map,DecisionTree,index):
@@ -251,6 +267,7 @@ def classification_per_row(map,DecisionTree,index):
             return classification_per_row(map,DecisionTree.left,index)
         else:
             return classification_per_row(map,DecisionTree.right, index)
+
 
 def classification(map,DecisionTree):
     result = []
@@ -277,7 +294,7 @@ def main(train_file, test_file, train_labels,max_depth,test_labels,metrics_file)
     data_stat=stat_analsysis(training_map)
     label_col = data_stat.keys()[-1] 
     DecisionTree = train_decision_tree(training_map,data_stat,max_depth)
-    tree_traversal(DecisionTree)
+    # tree_traversal(DecisionTree)
     train_classification = classification(training_map, DecisionTree)
     test_classification = classification(testing_map,DecisionTree)
     train_error = cal_error_rate(training_map,train_classification,label_col)
