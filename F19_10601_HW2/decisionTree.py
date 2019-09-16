@@ -177,9 +177,9 @@ def train_decision_tree(map,data_stat,max_depth, origin_labels_types,depth=0):
         left_data_stat,right_data_stat = new_data_stats[0],new_data_stats[1]
         left_route_val, right_route_val = route_vals[0], route_vals[1]
         decision = get_decision(data_stat, best_attribute)
-        printer_helper(left_data_stat,depth,left_route_val,attribute, origin_labels_types )
+        printer_helper(left_data_stat,depth,left_route_val,best_attribute, origin_labels_types )
         left = train_decision_tree(new_maps[0],left_data_stat,max_depth,origin_labels_types,depth=depth+1)
-        printer_helper(right_data_stat,depth,right_route_val,attribute,origin_labels_types )
+        printer_helper(right_data_stat,depth,right_route_val,best_attribute,origin_labels_types )
         right = train_decision_tree(new_maps[1],right_data_stat,max_depth,origin_labels_types,depth=depth+1)
         return DecisionTree(left=left , right=right, \
             attribute=best_attribute, decision=decision,depth=depth, left_route_val= left_route_val, right_route_val=right_route_val,data_stat=data_stat)
