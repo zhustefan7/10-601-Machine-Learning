@@ -101,10 +101,8 @@ def calc_conditional_entropy(map,data_stat,attribute):
             intersect_idx = np.intersect1d(data_with_spec_val_idx,spec_label_idx)
             #conditional probability of label being of specific value given speicific data value
             temp_prob = len(intersect_idx)/float(len(data_with_spec_val_idx))
-            # print(len(intersect_idx))
             if temp_prob!=0:
                 specific_entropy += temp_prob*math.log(temp_prob,2)
-        # print(len(intersect_idx),'specific entropy',specific_entropy)
         specific_entropy = -specific_entropy
         prob = len(data_with_spec_val_idx)/float(len(data))
         conditional_entropy += prob * specific_entropy
@@ -180,78 +178,37 @@ def train_decision_tree(map,data_stat,max_depth, origin_labels_types,depth=0):
         left_route_val, right_route_val = route_vals[0], route_vals[1]
         decision = get_decision(data_stat, best_attribute)
         printer_helper(left_data_stat,depth,left_route_val,attribute, origin_labels_types )
-        # print(' | '*depth+'{}={}:').format(best_attribute,left_route_val)
         left = train_decision_tree(new_maps[0],left_data_stat,max_depth,origin_labels_types,depth=depth+1)
         printer_helper(right_data_stat,depth,right_route_val,attribute,origin_labels_types )
-        # print(' | '*depth+'{}={}:').format(best_attribute,right_route_val)
         right = train_decision_tree(new_maps[1],right_data_stat,max_depth,origin_labels_types,depth=depth+1)
         return DecisionTree(left=left , right=right, \
             attribute=best_attribute, decision=decision,depth=depth, left_route_val= left_route_val, right_route_val=right_route_val,data_stat=data_stat)
 
 
 
-def printer(map,data_stat,depth,best_attribute):
-    label_col = data_stat.keys()[-1] 
-    if depth ==1:
-        print_list1 = []
-        for label in data_stat[label_col]:
-            print_list1.append(len(data_stat[label_col][label]))
-            print_list1.append(label)
-        print('[{} {} / {} {}]').format(print_list1[0],print_list1[1],print_list1[2],print_list1[3])
-
-    # for key in data_stat[best_attribute]:
-    #     print_list = []
-    #     for label in data_stat[label_col]:
-    #         intersect = np.intersect1d(data_stat[best_attribute][key], data_stat[label_col][label])
-    #         print_list.append(len(intersect))
-    #         print_list.append(label)
-    #     print(' | '*depth+str(best_attribute)+'[{} {} / {} {}]').format(print_list[0],print_list[1],print_list[2],print_list[3])
-
 def printer_helper(data_stat,depth,route_val,attribute ,original_label_types):
     label_col = data_stat.keys()[-1] 
     for key in data_stat[attribute]:
         print_list = []
-        for label in data_stat[label_col]:
-            intersect = np.intersect1d(data_stat[attribute][key], data_stat[label_col][label])
-            print_list.append(len(intersect))
-            print_list.append(label)
-    # print(len(print_list))
+        for label in original_label_types:
+            try:
+                intersect = np.intersect1d(data_stat[attribute][key], data_stat[label_col][label])
+                print_list.append(len(intersect))
+                print_list.append(label)
+            except:
+                print_list.append(0)
+                print_list.append(label)
     if len(print_list)==4:
         print(' | '*depth+'{}={}:'+'[{} {} / {} {}]').format(attribute,route_val,print_list[0],print_list[1],print_list[2],print_list[3])
     elif len(print_list)==2:
         print(' | '*depth+'{}={}:'+'[{} {}]').format(attribute,route_val,print_list[0],print_list[1])
-    # print(' | '*depth+'{}={}:').format(attribute,route_val)
     return print_list
 
-
-def tree_traversal(DecisionTree):
-    if DecisionTree == None:
-        return
-
-    if DecisionTree != None:
-        depth=DecisionTree.depth
-        attribute = DecisionTree.attribute
-        print_list = printer_helper(DecisionTree)
-
-        if len(print_list)==4:    
-            print(' | '*depth+'{}={}:'+'[{} {} / {} {}]').format(attribute,DecisionTree.left_route_val,print_list[0],print_list[1],print_list[2],print_list[3])
-        else:
-            print(' | '*depth+'{}={}:'+'[]').format(attribute,DecisionTree.left_route_val)
-            
-        tree_traversal(DecisionTree.left)
-        if len(print_list)==4:    
-            print(' | '*depth+'{}={}:'+'[{} {} / {} {}]').format(attribute,DecisionTree.right_route_val,print_list[0],print_list[1],print_list[2],print_list[3])
-        else:
-            print(' | '*depth+'{}={}:'+'[]').format(attribute,DecisionTree.right_route_val)
-        # print(' | '*depth+'{}={}').format(attribute,DecisionTree.right_route_val)
-        tree_traversal(DecisionTree.right)
 
 
 def classification_per_row(map,DecisionTree,index):
     attribute = DecisionTree.attribute
     if DecisionTree.left== None and DecisionTree.right== None:
-        # print(DecisionTree.decision)
-        # print(DecisionTree.depth)
         decision = DecisionTree.decision
         return decision
     else:
@@ -273,11 +230,9 @@ def cal_error_rate(map,classification_result, label_col):
     labels = map[label_col]
     matched_count = 0 
     for i in range(len(labels)):
-        # print(labels[i], classification_result[i])
         if labels[i] == classification_result[i]:
             matched_count+=1
     error_rate = (len(labels)-matched_count)/float(len(labels))
-    # print(error_rate)
     return error_rate
 
 def main(train_file, test_file, train_labels,max_depth,test_labels,metrics_file):
@@ -286,19 +241,19 @@ def main(train_file, test_file, train_labels,max_depth,test_labels,metrics_file)
     data_stat=stat_analsysis(training_map)
     label_col = data_stat.keys()[-1] 
     orignal_label_types = data_stat[label_col].keys()
-    print(orignal_label_types)
+    print('[{} {} / {} {}]').format(len(data_stat[label_col].values()[0]),data_stat[label_col].keys()[0],\
+    len(data_stat[label_col].values()[1]),data_stat[label_col].keys()[1])
     DecisionTree = train_decision_tree(training_map,data_stat,max_depth,orignal_label_types)
     # tree_traversal(DecisionTree)
     train_classification = classification(training_map, DecisionTree)
     test_classification = classification(testing_map,DecisionTree)
     train_error = cal_error_rate(training_map,train_classification,label_col)
-    # print('##########train error', train_error)
+    print('##########train error', train_error)
     test_error= cal_error_rate(testing_map,test_classification,label_col)
-    # print('##########test error', test_error)
+    print('##########test error', test_error)
 
     #writing the training label file
     train_label_file = open(train_labels, 'w')
-    # print(train_classification)
     train_label_file.writelines("%s\n" % label for label in train_classification)
     train_label_file.close()
 
@@ -319,42 +274,12 @@ def main(train_file, test_file, train_labels,max_depth,test_labels,metrics_file)
 
         
 if __name__ == "__main__":
-#     training_map = parse_file('handout/small_train.tsv')
-#     testing_map = parse_file('handout/small_test.tsv')
-#     # print(map.keys())
-#     data_stat=stat_analsysis(training_map)
-
-
-#     # new_maps , new_data_stats = split_data(map,data_stat,7)
-#     # mutual_info = calc_mutual_info(map, data_stat, 'Superfund_right_to_sue')
-#     # print(mutual_info)
-
-#     # marginal_entropy=calc_marginal_entropy(data_stat)
-#     # # calc_conditional_entropy(map,data_stat,0)
-#     # print(mutual_info)
-#     # print(marginal_entropy)
-#     DecisionTree = train_decision_tree(training_map,data_stat)
-#     # decision = classification_per_row(testing_map,DecisionTree,3)
-#     # print(decision)
-#     map = testing_map
-#     result =  classification(map,DecisionTree)
-#     # print(result)
-#     cal_error_rate(map, result)
-#     # print(DecisionTree.right_route_val)
-    # tree_traversal(DecisionTree)
     train_file = sys.argv[1]
     test_file = sys.argv[2]
     max_depth = int(sys.argv[3])
     train_labels = sys.argv[4]
     test_labels = sys.argv[5]
     metric_file = sys.argv[6]
-    # print('max_depth' , max_depth)
-    # train_file = 'handout/small_train.tsv'
-    # test_file = 'handout/small_test.tsv'
-    # train_labels = 'pol_3_train.labels'
-    # test_labels = 'pol_3_test.labels'
-    # metric_file = 'pol_3_metrics.txt'
-    # max_depth = 3
     main(train_file, test_file, train_labels,max_depth,test_labels,metric_file)
 
 
