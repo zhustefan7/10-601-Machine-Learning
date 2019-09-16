@@ -53,21 +53,9 @@ def stat_analsysis(map):
             else:
                 data_dict[data].append(i)
         data_stat[key] = data_dict
-    # print(data_stat)
     return data_stat
 
     
-
-# def calc_marginal_entropy(file_path):
-#     """
-#     calculates the marginal entropy of the labels of each data sheet
-#     """
-#     map = parse_label(file_path)
-#     majority = max(map.values())
-#     minority = min(map.values())
-#     total = float(majority + minority)
-#     entropy = -(minority/total*math.log(minority/total,2)+majority/total*math.log(majority/total,2))
-#     return entropy
 
 def calc_marginal_entropy(data_stat):
     """
@@ -165,7 +153,7 @@ def get_decision(data_stat, best_attribute):
 
 
 
-def train_decision_tree(map,data_stat,max_depth, depth=0):
+def train_decision_tree(map,data_stat,max_depth, origin_labels_types,depth=0):
     best_attribute = 0
     max_mutual_info = 0
     all_attributes = map.keys()[0:-1]
@@ -174,8 +162,6 @@ def train_decision_tree(map,data_stat,max_depth, depth=0):
         if curr_mutual_info >=max_mutual_info:
             max_mutual_info = curr_mutual_info
             best_attribute = attribute
-    # printer(map,data_stat,depth,best_attribute)
-    # print(depth, max_depth)
     if len(all_attributes) == 0 or depth >=max_depth or len(data_stat[best_attribute])==1:
         new_maps , new_data_stats ,route_vals= split_data(map,data_stat,best_attribute)
         decision = get_decision(data_stat , best_attribute)
@@ -193,8 +179,12 @@ def train_decision_tree(map,data_stat,max_depth, depth=0):
         left_data_stat,right_data_stat = new_data_stats[0],new_data_stats[1]
         left_route_val, right_route_val = route_vals[0], route_vals[1]
         decision = get_decision(data_stat, best_attribute)
-        left = train_decision_tree(new_maps[0],left_data_stat,max_depth,depth=depth+1)
-        right = train_decision_tree(new_maps[1],right_data_stat,max_depth,depth=depth+1)
+        printer_helper(left_data_stat,depth,left_route_val,attribute, origin_labels_types )
+        # print(' | '*depth+'{}={}:').format(best_attribute,left_route_val)
+        left = train_decision_tree(new_maps[0],left_data_stat,max_depth,origin_labels_types,depth=depth+1)
+        printer_helper(right_data_stat,depth,right_route_val,attribute,origin_labels_types )
+        # print(' | '*depth+'{}={}:').format(best_attribute,right_route_val)
+        right = train_decision_tree(new_maps[1],right_data_stat,max_depth,origin_labels_types,depth=depth+1)
         return DecisionTree(left=left , right=right, \
             attribute=best_attribute, decision=decision,depth=depth, left_route_val= left_route_val, right_route_val=right_route_val,data_stat=data_stat)
 
@@ -209,19 +199,15 @@ def printer(map,data_stat,depth,best_attribute):
             print_list1.append(label)
         print('[{} {} / {} {}]').format(print_list1[0],print_list1[1],print_list1[2],print_list1[3])
 
-    for key in data_stat[best_attribute]:
-        print_list = []
-        for label in data_stat[label_col]:
-            intersect = np.intersect1d(data_stat[best_attribute][key], data_stat[label_col][label])
-            print_list.append(len(intersect))
-            print_list.append(label)
-        print(' | '*depth+str(best_attribute)+'[{} {} / {} {}]').format(print_list[0],print_list[1],print_list[2],print_list[3])
+    # for key in data_stat[best_attribute]:
+    #     print_list = []
+    #     for label in data_stat[label_col]:
+    #         intersect = np.intersect1d(data_stat[best_attribute][key], data_stat[label_col][label])
+    #         print_list.append(len(intersect))
+    #         print_list.append(label)
+    #     print(' | '*depth+str(best_attribute)+'[{} {} / {} {}]').format(print_list[0],print_list[1],print_list[2],print_list[3])
 
-def printer_helper(DecisionTree):
-    data_stat=DecisionTree.data_stat
-    depth=DecisionTree.depth
-    attribute = DecisionTree.attribute
-    # print(data_stat)
+def printer_helper(data_stat,depth,route_val,attribute ,original_label_types):
     label_col = data_stat.keys()[-1] 
     for key in data_stat[attribute]:
         print_list = []
@@ -229,6 +215,12 @@ def printer_helper(DecisionTree):
             intersect = np.intersect1d(data_stat[attribute][key], data_stat[label_col][label])
             print_list.append(len(intersect))
             print_list.append(label)
+    # print(len(print_list))
+    if len(print_list)==4:
+        print(' | '*depth+'{}={}:'+'[{} {} / {} {}]').format(attribute,route_val,print_list[0],print_list[1],print_list[2],print_list[3])
+    elif len(print_list)==2:
+        print(' | '*depth+'{}={}:'+'[{} {}]').format(attribute,route_val,print_list[0],print_list[1])
+    # print(' | '*depth+'{}={}:').format(attribute,route_val)
     return print_list
 
 
@@ -293,14 +285,16 @@ def main(train_file, test_file, train_labels,max_depth,test_labels,metrics_file)
     testing_map = parse_file(test_file)
     data_stat=stat_analsysis(training_map)
     label_col = data_stat.keys()[-1] 
-    DecisionTree = train_decision_tree(training_map,data_stat,max_depth)
+    orignal_label_types = data_stat[label_col].keys()
+    print(orignal_label_types)
+    DecisionTree = train_decision_tree(training_map,data_stat,max_depth,orignal_label_types)
     # tree_traversal(DecisionTree)
     train_classification = classification(training_map, DecisionTree)
     test_classification = classification(testing_map,DecisionTree)
     train_error = cal_error_rate(training_map,train_classification,label_col)
-    print('##########train error', train_error)
+    # print('##########train error', train_error)
     test_error= cal_error_rate(testing_map,test_classification,label_col)
-    print('##########test error', test_error)
+    # print('##########test error', test_error)
 
     #writing the training label file
     train_label_file = open(train_labels, 'w')
