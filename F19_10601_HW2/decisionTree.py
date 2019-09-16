@@ -165,7 +165,7 @@ def get_decision(data_stat, best_attribute):
 
 
 
-def train_decision_tree(map,data_stat,max_depth, depth=1):
+def train_decision_tree(map,data_stat,max_depth, depth=0):
     best_attribute = 0
     max_mutual_info = 0
     all_attributes = map.keys()[0:-1]
@@ -285,7 +285,7 @@ def cal_error_rate(map,classification_result, label_col):
         if labels[i] == classification_result[i]:
             matched_count+=1
     error_rate = (len(labels)-matched_count)/float(len(labels))
-    print(error_rate)
+    # print(error_rate)
     return error_rate
 
 def main(train_file, test_file, train_labels,max_depth,test_labels,metrics_file):
@@ -298,7 +298,9 @@ def main(train_file, test_file, train_labels,max_depth,test_labels,metrics_file)
     train_classification = classification(training_map, DecisionTree)
     test_classification = classification(testing_map,DecisionTree)
     train_error = cal_error_rate(training_map,train_classification,label_col)
+    print('##########train error', train_error)
     test_error= cal_error_rate(testing_map,test_classification,label_col)
+    print('##########test error', test_error)
 
     #writing the training label file
     train_label_file = open(train_labels, 'w')
@@ -352,7 +354,7 @@ if __name__ == "__main__":
     train_labels = sys.argv[4]
     test_labels = sys.argv[5]
     metric_file = sys.argv[6]
-
+    # print('max_depth' , max_depth)
     # train_file = 'handout/small_train.tsv'
     # test_file = 'handout/small_test.tsv'
     # train_labels = 'pol_3_train.labels'
