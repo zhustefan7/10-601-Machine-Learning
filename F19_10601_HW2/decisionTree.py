@@ -4,6 +4,7 @@ import math
 import numpy as np
 from collections import OrderedDict 
 import sys
+# import matplotlib.pyplot as plt
 
 
 class DecisionTree:
@@ -160,6 +161,7 @@ def train_decision_tree(map,data_stat,max_depth, origin_labels_types,depth=0):
         if curr_mutual_info >=max_mutual_info:
             max_mutual_info = curr_mutual_info
             best_attribute = attribute
+    print('depth',depth,'max mutual info', max_mutual_info)
     if len(all_attributes) == 0 or depth >=max_depth or len(data_stat[best_attribute])==1:
         new_maps , new_data_stats ,route_vals= split_data(map,data_stat,best_attribute)
         decision = get_decision(data_stat , best_attribute)
@@ -177,9 +179,9 @@ def train_decision_tree(map,data_stat,max_depth, origin_labels_types,depth=0):
         left_data_stat,right_data_stat = new_data_stats[0],new_data_stats[1]
         left_route_val, right_route_val = route_vals[0], route_vals[1]
         decision = get_decision(data_stat, best_attribute)
-        printer_helper(left_data_stat,depth,left_route_val,best_attribute, origin_labels_types )
+        # printer_helper(left_data_stat,depth,left_route_val,best_attribute, origin_labels_types )
         left = train_decision_tree(new_maps[0],left_data_stat,max_depth,origin_labels_types,depth=depth+1)
-        printer_helper(right_data_stat,depth,right_route_val,best_attribute,origin_labels_types )
+        # printer_helper(right_data_stat,depth,right_route_val,best_attribute,origin_labels_types )
         right = train_decision_tree(new_maps[1],right_data_stat,max_depth,origin_labels_types,depth=depth+1)
         return DecisionTree(left=left , right=right, \
             attribute=best_attribute, decision=decision,depth=depth, left_route_val= left_route_val, right_route_val=right_route_val,data_stat=data_stat)
@@ -268,6 +270,30 @@ def main(train_file, test_file, train_labels,max_depth,test_labels,metrics_file)
     metrics_file.write('error(test):%f'% test_error)
     metrics_file.close()
 
+def train_with_max_depth(training_map,testing_map, data_stat, max_depth):
+    label_col = data_stat.keys()[-1] 
+    orignal_label_types = data_stat[label_col].keys()
+    DecisionTree = train_decision_tree(training_map,data_stat,max_depth,orignal_label_types)
+    train_classification = classification(training_map, DecisionTree)
+    test_classification = classification(testing_map,DecisionTree)
+    train_error = cal_error_rate(training_map,train_classification,label_col)
+    test_error= cal_error_rate(testing_map,test_classification,label_col)
+    return train_error , test_error
+
+def generate_plot(train_file,test_file):
+    training_map = parse_file(train_file)
+    testing_map = parse_file(test_file)
+    data_stat=stat_analsysis(training_map)
+    train_errors = []
+    test_errors = []
+    for i in range(0,8):
+        train_error, test_error = train_with_max_depth(training_map,testing_map, data_stat, i)
+        train_errors.append(train_error)
+        test_errors.append(test_error)
+    print(train_errors)
+    print(test_errors)
+    return
+
 
 
 
@@ -281,5 +307,5 @@ if __name__ == "__main__":
     test_labels = sys.argv[5]
     metric_file = sys.argv[6]
     main(train_file, test_file, train_labels,max_depth,test_labels,metric_file)
-
+    generate_plot(train_file,test_file)
 
