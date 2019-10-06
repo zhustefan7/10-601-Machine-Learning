@@ -60,42 +60,7 @@ def extract_feature_aux2(input_file, output_file,dictionary):
             output_file.write('\n')
     output_file.close()
 
-# def extract_feature_aux_fast1(input_file, output_file,dictionary):
-#     input_file=open(input_file,'r')
-#     lines = list(input_file)
-#     print(lines[0])
-#     # print(lines)
-#     # lines=lines.split()
-#     # print(lines)
 
-#     # output_file = open(output_file , 'w')
-#     # with open(input_file) as input_file:
-#     #     line = input_file.readline()
-#     #     while line:
-#     #         print(line)
-
-
-
-#     for row in lines:
-#         words= row.split()
-#         label = words[0]
-#         print(label )
-#         # output_file.write(label)
-#         temp_dict = OrderedDict()
-#         for word in words:
-#             if word in dictionary:
-#                 continue
-#         #         if word not in temp_dict.keys():
-#         #             temp_dict[word]=1
-#         #         else:
-#         #             temp_dict[word]+=1
-#         # for word, val in temp_dict.items():
-#         #     if val < 4:
-#         #         indx = dictionary[word]
-#                 # output_file.write('\t'+str(indx)+':'+ '1')
-#         # output_file.write('\n')
-#     # output_file.close()
-#     return
 
 def feature(train_input,validation_input,test_input,dict_input,formatted_train_out,formatted_validation_out,formatted_test_out,feature_flag):
     dictionary = parse_dict(dict_input)
@@ -112,12 +77,22 @@ def feature(train_input,validation_input,test_input,dict_input,formatted_train_o
 
 
 if __name__ == '__main__':
-    train_input = 'handout/largedata/train_data.tsv'
-    test_input = 'handout/largedata/test_data.tsv'
-    validation_input = 'handout/largedata/valid_data.tsv'
-    formatted_train_out = 'formatted_files/formatted_train_out.tsv'
-    formatted_test_out = 'formatted_files/formatted_test_out.tsv'
-    formatted_validation_out = 'formatted_files/formatted_validation_out.tsv'
-    feature_flag = 2
-    dict_input = 'handout/dict.txt'
+    # train_input = 'handout/largedata/train_data.tsv'
+    # validation_input = 'handout/largedata/valid_data.tsv'
+    # test_input = 'handout/largedata/test_data.tsv'
+    # dict_input = 'handout/dict.txt'
+    # formatted_train_out = 'formatted_files/formatted_train_out.tsv'
+    # formatted_validation_out = 'formatted_files/formatted_validation_out.tsv'
+    # formatted_test_out = 'formatted_files/formatted_test_out.tsv'
+    # feature_flag = 2
+
+
+    train_input = sys.argv[1]
+    validation_input = sys.argv[2]
+    test_input = sys.argv[3]
+    dict_input = sys.argv[4]
+    formatted_train_out = sys.argv[5]
+    formatted_validation_out = sys.argv[6]
+    formatted_test_out = sys.argv[7]
+    feature_flag = int(sys.argv[8])
     feature(train_input,validation_input,test_input,dict_input,formatted_train_out,formatted_validation_out,formatted_test_out,feature_flag)
