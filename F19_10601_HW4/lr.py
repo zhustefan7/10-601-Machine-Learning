@@ -96,28 +96,51 @@ def calc_error_rate(labels,predictions):
     return false_prediction_num/float(len(labels))
 
 
+def main(formatted_train,formatted_valid,formatted_test,dict_input,train_out, test_out,metrics_out,epoch):
+    rate = 0.1
+    dictionary = parse_dict(dict_input)
+
+    #training , predicting and calculating training error
+    train_data_dict, labels = create_data_dict(formatted_train)
+    theta =lr_aux(train_data_dict, labels, dictionary, epoch ,rate)
+    train_predictions = prediction(train_data_dict,theta)
+    train_err_rate = calc_error_rate(labels, train_predictions)
+
+    #predict on testing data and calculate testing error
+    test_data_dict, labels = create_data_dict(formatted_test)
+    test_predictions = prediction(test_data_dict,theta)
+    test_err_rate = calc_error_rate(labels, test_predictions)
+
+
+    print 'train_err_rate',train_err_rate
+    print 'test_err_rate',test_err_rate
+
+
 
 
 if __name__ == '__main__':
-    dict_intput = 'handout/dict.txt'
-    dictionary = parse_dict(dict_intput)
-    epoch = 30
+    dict_input = 'handout/dict.txt'
+    dictionary = parse_dict(dict_input)
+    epoch = 60
     rate = 0.1
+    print 'Epoch :', epoch
+
     label_out = 'train_out.label'
     formatted_train = 'formatted_files/formatted_train_out.tsv'
-    formatted_test =  'formatted_files/formatted_train_out.tsv'
+    formatted_test =  'formatted_files/formatted_test_out.tsv'
     formatted_valid = 'formatted_files/formatted_validatoin_out.tsv'
 
     train_out ='formatted_files/train_out.labels'
     test_out = 'formatted_files/test_out.labels'
     metrics_out = 'formatted_files/metric_out.txt'
+    main(formatted_train,formatted_valid,formatted_test,dict_input,train_out, test_out,metrics_out,epoch)
 
 
 
-    data_dict , labels = create_data_dict(formatted_train_data)
-    theta =lr_aux(data_dict, labels, dictionary, epoch ,rate)
-    predictions = prediction(data_dict,theta)
-    err_rate = calc_error_rate(labels, predictions)
-    print(err_rate)
+    # data_dict , labels = create_data_dict(formatted_train)
+    # theta =lr_aux(data_dict, labels, dictionary, epoch ,rate)
+    # predictions = prediction(data_dict,theta)
+    # err_rate = calc_error_rate(labels, predictions)
+    # print(err_rate)
 
 

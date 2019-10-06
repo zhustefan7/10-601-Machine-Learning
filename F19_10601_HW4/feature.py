@@ -44,7 +44,6 @@ def extract_feature_aux2(input_file, output_file,dictionary):
             words = row[1]
             label = row[0]
             words = words.split()
-            print(words)
             output_file.write(label)
             temp_dict = OrderedDict()
             for word in words:
@@ -113,12 +112,12 @@ def feature(train_input,validation_input,test_input,dict_input,formatted_train_o
 
 
 if __name__ == '__main__':
-    train_input = 'handout/smalldata/smalltrain_data.tsv'
-    test_input = 'handout/smalldata/smalltest_data.tsv'
-    validation_input = 'handout/smalldata/smallvalid_data.tsv'
+    train_input = 'handout/largedata/train_data.tsv'
+    test_input = 'handout/largedata/test_data.tsv'
+    validation_input = 'handout/largedata/valid_data.tsv'
     formatted_train_out = 'formatted_files/formatted_train_out.tsv'
     formatted_test_out = 'formatted_files/formatted_test_out.tsv'
     formatted_validation_out = 'formatted_files/formatted_validation_out.tsv'
-    feature_flag = 1
+    feature_flag = 2
     dict_input = 'handout/dict.txt'
     feature(train_input,validation_input,test_input,dict_input,formatted_train_out,formatted_validation_out,formatted_test_out,feature_flag)
