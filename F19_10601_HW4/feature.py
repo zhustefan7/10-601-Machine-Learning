@@ -2,6 +2,9 @@ from __future__ import print_function
 import sys
 import csv
 import numpy as np
+from collections import OrderedDict 
+import pickle
+
 
 
 def parse_dict(dict_input):
@@ -9,25 +12,113 @@ def parse_dict(dict_input):
     input_file = open(dict_input , 'r')
     for line in input_file:
         data = line.split()
-        if data[0] not in dictionary.keys():
-            dictionary[data[0]]=data[1]
+        dictionary[data[0]]=data[1]
     return dictionary
 
-def parse_data(data):
-    with open(data) as file:
+def extract_feature_aux1(input_file, output_file,dictionary):
+    output_file = open(output_file , 'w')
+    with open(input_file) as file:
         reader = csv.reader(file, delimiter='\t')
         for row in reader:
-            print(row)
-            print('/n')
+            words = row[1]
+            label = row[0]
+            words = words.split()
+            output_file.write(label)
+            temp_dict = {}
+            for word in words:
+                if word in dictionary:
+                    if word not in temp_dict:
+                        indx = dictionary[word]
+                        output_file.write('\t'+str(indx)+':'+ '1')
+                        temp_dict[word]=1
+                
+            output_file.write('\n')
+    output_file.close()
 
 
-# def feature(train_input,dict):
+def extract_feature_aux2(input_file, output_file,dictionary):
+    output_file = open(output_file , 'w')
+    with open(input_file) as file:
+        reader = csv.reader(file, delimiter='\t')
+        for row in reader:
+            words = row[1]
+            label = row[0]
+            words = words.split()
+            print(words)
+            output_file.write(label)
+            temp_dict = OrderedDict()
+            for word in words:
+                if word in dictionary:
+                    if word not in temp_dict:
+                        temp_dict[word]=1
+                    else:
+                        temp_dict[word]+=1
+            for word, val in temp_dict.items():
+                if val < 4:
+                    indx = dictionary[word]
+                    output_file.write('\t'+str(indx)+':'+ '1')
+                        
+            output_file.write('\n')
+    output_file.close()
+
+# def extract_feature_aux_fast1(input_file, output_file,dictionary):
+#     input_file=open(input_file,'r')
+#     lines = list(input_file)
+#     print(lines[0])
+#     # print(lines)
+#     # lines=lines.split()
+#     # print(lines)
+
+#     # output_file = open(output_file , 'w')
+#     # with open(input_file) as input_file:
+#     #     line = input_file.readline()
+#     #     while line:
+#     #         print(line)
+
+
+
+#     for row in lines:
+#         words= row.split()
+#         label = words[0]
+#         print(label )
+#         # output_file.write(label)
+#         temp_dict = OrderedDict()
+#         for word in words:
+#             if word in dictionary:
+#                 continue
+#         #         if word not in temp_dict.keys():
+#         #             temp_dict[word]=1
+#         #         else:
+#         #             temp_dict[word]+=1
+#         # for word, val in temp_dict.items():
+#         #     if val < 4:
+#         #         indx = dictionary[word]
+#                 # output_file.write('\t'+str(indx)+':'+ '1')
+#         # output_file.write('\n')
+#     # output_file.close()
+#     return
+
+def feature(train_input,validation_input,test_input,dict_input,formatted_train_out,formatted_validation_out,formatted_test_out,feature_flag):
+    dictionary = parse_dict(dict_input)
+    if feature_flag == 1:
+        extract_feature_aux1(train_input, formatted_train_out,dictionary)
+        extract_feature_aux1(validation_input, formatted_validation_out,dictionary)
+        extract_feature_aux1(test_input, formatted_test_out,dictionary)
+    if feature_flag == 2:
+        extract_feature_aux2(train_input, formatted_train_out,dictionary)
+        extract_feature_aux2(validation_input, formatted_validation_out,dictionary)
+        extract_feature_aux2(test_input, formatted_test_out,dictionary)
+
 
 
 
 if __name__ == '__main__':
     train_input = 'handout/smalldata/smalltrain_data.tsv'
-    dict_intput = 'handout/dict.txt'
-
-    # parse_dict(dict_intput)
-    parse_data(train_input)
+    test_input = 'handout/smalldata/smalltest_data.tsv'
+    validation_input = 'handout/smalldata/smallvalid_data.tsv'
+    formatted_train_out = 'formatted_files/formatted_train_out.tsv'
+    formatted_test_out = 'formatted_files/formatted_test_out.tsv'
+    formatted_validation_out = 'formatted_files/formatted_validation_out.tsv'
+    feature_flag = 1
+    dict_input = 'handout/dict.txt'
+    feature(train_input,validation_input,test_input,dict_input,formatted_train_out,formatted_validation_out,formatted_test_out,feature_flag)
