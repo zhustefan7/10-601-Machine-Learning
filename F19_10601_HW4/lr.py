@@ -5,6 +5,7 @@ import math
 import sys
 
 
+
 def create_data_dict(formatted_data, theta_origin_len):
     """this function reads in the tsv file and convert the tsv into 
    a dictionary,with each key corresponding to an example   
@@ -28,15 +29,13 @@ def create_data_dict(formatted_data, theta_origin_len):
             
         #appending 1 to the back of the data to account for bias term
         example_indices.append(theta_origin_len)
-
         data_dict[example_num] = example_indices
-        example_num +=1
+        example_num +=1 
     return data_dict, labels
 
 
 def sparse_dot(example_indices,theta):
     return sum(theta[example_indices])
-
 
 
 def lr_aux(data_dict, labels, dictionary, epoch ,rate):
@@ -49,11 +48,30 @@ def lr_aux(data_dict, labels, dictionary, epoch ,rate):
             label=labels[key]
             curr_example_indices = data_dict[key]
             product = sparse_dot(curr_example_indices ,theta)
-            if product!=0:
-                grad = math.exp(product)/(1+math.exp(product))-label
-            else:
-                grad = -label
+            grad = math.exp(product)/(1+math.exp(product))-label
             theta[curr_example_indices] -= rate*grad
+    return theta
+
+def lr_aux2(data_dict, labels, dictionary, epoch ,rate,neg_log_out):
+    #initialized theta 
+    theta = np.zeros(len(dictionary)+1)
+    neg_log_likihood=0
+    neg_log_out = open(neg_log_out, 'w')
+    #loop through training epoch
+    for i in range(epoch):
+        neg_log_likihood=0
+        #loop through all the data point
+        for key in data_dict:
+            label=labels[key]
+            curr_example_indices = data_dict[key]
+            product = sparse_dot(curr_example_indices ,theta)
+            grad = math.exp(product)/(1+math.exp(product))-label
+            theta[curr_example_indices] -= rate*grad
+            neg_log_likihood += -label*product+math.log(1+math.exp(product))
+        result = neg_log_likihood/len(data_dict.keys())
+        neg_log_out.write("%s\n" % str(result))
+    neg_log_out.close()
+    
     return theta
 
 
@@ -85,15 +103,15 @@ def main(formatted_train,formatted_valid,formatted_test,dict_input,train_out, te
     theta_origin_len = len(dictionary)
 
     #training , predicting and calculating training error
-    train_data_dict, labels = create_data_dict(formatted_train,theta_origin_len)
-    theta =lr_aux(train_data_dict, labels, dictionary, epoch ,rate)
+    train_data_dict, train_labels = create_data_dict(formatted_train,theta_origin_len)
+    theta =lr_aux(train_data_dict, train_labels, dictionary, epoch ,rate)
     train_predictions = prediction(train_data_dict,theta)
-    train_err_rate = calc_error_rate(labels, train_predictions)
+    train_err_rate = calc_error_rate(train_labels, train_predictions)
 
     #predict on testing data and calculate testing error
-    test_data_dict, labels = create_data_dict(formatted_test,theta_origin_len)
+    test_data_dict, test_labels = create_data_dict(formatted_test,theta_origin_len)
     test_predictions = prediction(test_data_dict,theta)
-    test_err_rate = calc_error_rate(labels, test_predictions)
+    test_err_rate = calc_error_rate(test_labels, test_predictions)
 
 
     #writing the training label file
@@ -108,13 +126,37 @@ def main(formatted_train,formatted_valid,formatted_test,dict_input,train_out, te
 
     #Writing the metric file
     metrics_file = open(metrics_out, 'w')
-    metrics_file.write('error(train):%f\n'% train_err_rate)
-    metrics_file.write('error(test):%f'% test_err_rate)
+    metrics_file.write('error(train): %.6f\n'% train_err_rate)
+    metrics_file.write('error(test): %.6f\n'% test_err_rate)
     metrics_file.close()
 
 
     print 'train_err_rate',train_err_rate
     print 'test_err_rate',test_err_rate
+
+
+    
+
+def average_log_liklihoold():
+    formatted_train = 'formatted_files/formatted_train_out.tsv'
+    formatted_valid =  'formatted_files/formatted_validation_out.tsv'
+    dict_input = 'handout/dict.txt'
+
+    epoch = 200
+    rate = 0.1
+    dictionary = parse_dict(dict_input)
+    theta_origin_len = len(dictionary)
+
+    train_neg_likihood_out = 'formatted_files/train_neg_likihood_model2.tsv'
+    train_data_dict, train_labels = create_data_dict(formatted_train,theta_origin_len)
+    theta =lr_aux2(train_data_dict, train_labels, dictionary, epoch ,rate,train_neg_likihood_out)
+
+    valid_neg_likihood_out = 'formatted_files/valid_neg_likihood_model2.tsv'
+    valid_data_dict, valid_labels = create_data_dict(formatted_valid,theta_origin_len)
+    theta =lr_aux2(valid_data_dict, valid_labels, dictionary, epoch ,rate,valid_neg_likihood_out)
+
+
+
 
 
 
@@ -130,23 +172,16 @@ if __name__ == '__main__':
     # epoch = 30 
 
 
-    formatted_train = sys.argv[1]
-    formatted_valid = sys.argv[2]
-    formatted_test =  sys.argv[3]
-    dict_input = sys.argv[4]
-    train_out = sys.argv[5]
-    test_out = sys.argv[6]
-    metrics_out = sys.argv[7]
-    epoch = int(sys.argv[8])
+    # formatted_train = sys.argv[1]
+    # formatted_valid = sys.argv[2]
+    # formatted_test =  sys.argv[3]
+    # dict_input = sys.argv[4]
+    # train_out = sys.argv[5]
+    # test_out = sys.argv[6]
+    # metrics_out = sys.argv[7]
+    # epoch = int(sys.argv[8])
+    # main(formatted_train,formatted_valid,formatted_test,dict_input,train_out, test_out,metrics_out,epoch)
 
-    main(formatted_train,formatted_valid,formatted_test,dict_input,train_out, test_out,metrics_out,epoch)
 
-    #rate = 0.1
-    # dictionary = parse_dict(dict_input)
-    # data_dict , labels = create_data_dict(formatted_train)
-    # theta =lr_aux(data_dict, labels, dictionary, epoch ,rate)
-    # predictions = prediction(data_dict,theta)
-    # err_rate = calc_error_rate(labels, predictions)
-    # print(err_rate)
-
+    average_log_liklihoold()
 

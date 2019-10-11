@@ -77,22 +77,22 @@ def feature(train_input,validation_input,test_input,dict_input,formatted_train_o
 
 
 if __name__ == '__main__':
-    # train_input = 'handout/largedata/train_data.tsv'
-    # validation_input = 'handout/largedata/valid_data.tsv'
-    # test_input = 'handout/largedata/test_data.tsv'
-    # dict_input = 'handout/dict.txt'
-    # formatted_train_out = 'formatted_files/formatted_train_out.tsv'
-    # formatted_validation_out = 'formatted_files/formatted_validation_out.tsv'
-    # formatted_test_out = 'formatted_files/formatted_test_out.tsv'
-    # feature_flag = 2
+    train_input = 'handout/largedata/train_data.tsv'
+    validation_input = 'handout/largedata/valid_data.tsv'
+    test_input = 'handout/largedata/test_data.tsv'
+    dict_input = 'handout/dict.txt'
+    formatted_train_out = 'formatted_files/formatted_train_out.tsv'
+    formatted_validation_out = 'formatted_files/formatted_validation_out.tsv'
+    formatted_test_out =  'formatted_files/formatted_test_out.tsv'
+    feature_flag = 2
 
 
-    train_input = sys.argv[1]
-    validation_input = sys.argv[2]
-    test_input = sys.argv[3]
-    dict_input = sys.argv[4]
-    formatted_train_out = sys.argv[5]
-    formatted_validation_out = sys.argv[6]
-    formatted_test_out = sys.argv[7]
-    feature_flag = int(sys.argv[8])
+    # train_input = sys.argv[1]
+    # validation_input = sys.argv[2]
+    # test_input = sys.argv[3]
+    # dict_input = sys.argv[4]
+    # formatted_train_out = sys.argv[5]
+    # formatted_validation_out = sys.argv[6]
+    # formatted_test_out = sys.argv[7]
+    # feature_flag = int(sys.argv[8])
     feature(train_input,validation_input,test_input,dict_input,formatted_train_out,formatted_validation_out,formatted_test_out,feature_flag)
