@@ -155,9 +155,57 @@ def average_log_liklihoold():
     valid_data_dict, valid_labels = create_data_dict(formatted_valid,theta_origin_len)
     theta =lr_aux2(valid_data_dict, valid_labels, dictionary, epoch ,rate,valid_neg_likihood_out)
 
+    
 
 
+def avg_log_likelihood2():
+    formatted_train = 'formatted_files/formatted_train_out.tsv'
+    formatted_valid =  'formatted_files/formatted_validation_out.tsv'
+    dict_input = 'handout/dict.txt'
+    rate = 0.1
+    dictionary = parse_dict(dict_input)
+    theta_origin_len = len(dictionary)
+    train_data_dict, train_labels = create_data_dict(formatted_train,theta_origin_len)
+    valid_data_dict, valid_labels = create_data_dict(formatted_valid,theta_origin_len)
 
+    train_neg_likelihood_list = []
+    valid_neg_likelihood_list = []
+    for epoch in range(1,201):
+        theta =lr_aux(train_data_dict, train_labels, dictionary, epoch ,rate)
+        neg_log_likihood = 0
+        for key in train_data_dict:
+            label=train_labels[key]
+            curr_example_indices = train_data_dict[key]
+            product = sparse_dot(curr_example_indices ,theta)
+            # grad = math.exp(product)/(1+math.exp(product))-label
+            # theta[curr_example_indices] -= rate*grad
+            neg_log_likihood += -label*product+math.log(1+math.exp(product))
+        train_avg_log_likelihood = neg_log_likihood/len(train_data_dict.keys())
+        train_neg_likelihood_list.append(train_avg_log_likelihood)
+
+        neg_log_likihood = 0
+        for key in valid_data_dict:
+            label=valid_labels[key]
+            curr_example_indices = valid_data_dict[key]
+            product = sparse_dot(curr_example_indices ,theta)
+            # grad = math.exp(product)/(1+math.exp(product))-label
+            # theta[curr_example_indices] -= rate*grad
+            neg_log_likihood += -label*product+math.log(1+math.exp(product))
+        valid_avg_log_likelihood = neg_log_likihood/len(valid_data_dict.keys())
+        valid_neg_likelihood_list.append(valid_avg_log_likelihood)
+
+    
+    train_neg_likihood_out = 'formatted_files/train_neg_likihood_model2.tsv'
+    valid_neg_likihood_out = 'formatted_files/valid_neg_likihood_model2.tsv'
+
+
+    train_neg_likihood_out = open(train_neg_likihood_out, 'w')
+    train_neg_likihood_out.writelines("%s " % likelihood for likelihood in train_neg_likelihood_list)
+    train_neg_likihood_out.close()
+
+    valid_neg_likihood_out = open(valid_neg_likihood_out, 'w')
+    valid_neg_likihood_out.writelines("%s " % likelihood for likelihood in valid_neg_likelihood_list)
+    valid_neg_likihood_out.close()
 
 
 
@@ -169,7 +217,7 @@ if __name__ == '__main__':
     # train_out ='formatted_files/train_out.labels'
     # test_out = 'formatted_files/test_out.labels'
     # metrics_out = 'formatted_files/metric_out.txt'
-    # epoch = 30 
+    # epoch = 50
 
 
     # formatted_train = sys.argv[1]
@@ -183,5 +231,6 @@ if __name__ == '__main__':
     # main(formatted_train,formatted_valid,formatted_test,dict_input,train_out, test_out,metrics_out,epoch)
 
 
-    average_log_liklihoold()
+    avg_log_likelihood2()
+
 
