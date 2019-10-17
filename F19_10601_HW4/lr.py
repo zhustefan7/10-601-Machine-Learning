@@ -177,8 +177,6 @@ def avg_log_likelihood2():
             label=train_labels[key]
             curr_example_indices = train_data_dict[key]
             product = sparse_dot(curr_example_indices ,theta)
-            # grad = math.exp(product)/(1+math.exp(product))-label
-            # theta[curr_example_indices] -= rate*grad
             neg_log_likihood += -label*product+math.log(1+math.exp(product))
         train_avg_log_likelihood = neg_log_likihood/len(train_data_dict.keys())
         train_neg_likelihood_list.append(train_avg_log_likelihood)
@@ -188,8 +186,6 @@ def avg_log_likelihood2():
             label=valid_labels[key]
             curr_example_indices = valid_data_dict[key]
             product = sparse_dot(curr_example_indices ,theta)
-            # grad = math.exp(product)/(1+math.exp(product))-label
-            # theta[curr_example_indices] -= rate*grad
             neg_log_likihood += -label*product+math.log(1+math.exp(product))
         valid_avg_log_likelihood = neg_log_likihood/len(valid_data_dict.keys())
         valid_neg_likelihood_list.append(valid_avg_log_likelihood)
