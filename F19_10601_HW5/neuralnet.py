@@ -271,8 +271,8 @@ def main(train_input, test_input, train_out,test_out,metrics_out,num_epoch, hidd
         #generate metric file
         (a,z,b,train_prediction,J_training,beta,example_data,example_label) = NNForward(train_input_data,train_labels,alpha,beta)
         (a,z,b,test_prediction,J_testing,beta,example_data,example_label) = NNForward(test_input_data,test_labels,alpha,beta)
-        metrics_file.write('epoch=:%d crossentropy(train): %f\n'% (epoch,J_training))
-        metrics_file.write('epoch=:%d crossentropy(test): %f\n'% (epoch,J_testing))
+        metrics_file.write('epoch=%d crossentropy(train): %f\n'% (epoch+1,J_training))
+        metrics_file.write('epoch=%d crossentropy(test): %f\n'% (epoch+1,J_testing))
 
 
     #make training prediction
@@ -302,9 +302,140 @@ def main(train_input, test_input, train_out,test_out,metrics_out,num_epoch, hidd
 
 
 
+
+def plotting_part1():
+    output_file = 'output_files/1_2_plot.csv'
+    train_input = 'handout/largeTrain.csv'
+    num_epoch = 100
+    lr = 0.01
+    init_flag = 1
+    #output class number
+    K = 10
+    #Proccess Training Data
+    train_input_data, train_original_labels = parse_dict(train_input)
+    train_labels= convert_one_hot(train_original_labels,K)   
+    #append bias term
+    train_input_data = np.insert(train_input_data, 0, 1,axis=1)
+
+    hidden_unit_list = [5,20,50,100,200]
+    avg_cross_entropy_list = []
+    for hidden_unit_num in hidden_unit_list: 
+        #initialize parameters
+        feature_num = train_input_data.shape[1]
+        alpha, beta = initialize_params(hidden_unit_num,init_flag,feature_num)
+        example_num = train_input_data.shape[0]
+
+        #training loop 
+        for epoch in range(num_epoch):
+            for example in range(example_num):
+                example_data = train_input_data[example,:][np.newaxis,:] 
+                example_label = train_labels[:,example][:,np.newaxis] 
+                forward_object =  NNForward(example_data,example_label,alpha,beta)
+                a,z,b,y_hat,J,beta,example_data,example_label = forward_object
+                # print('example_label shape',example_data.shape)
+                galpha, gbeta = NNBackward(forward_object)
+                alpha = alpha - lr*galpha
+                beta = beta - lr*gbeta
+        
+        #analyze loop
+        J_total=0
+        for example in range(example_num):
+            example_data = train_input_data[example,:][np.newaxis,:] 
+            example_label = train_labels[:,example][:,np.newaxis] 
+            forward_object =  NNForward(example_data,example_label,alpha,beta)
+            a,z,b,y_hat,J,beta,example_data,example_label = forward_object
+            J_total += J
+        avg_cross_entropy_list.append(J_total/example_num) 
+
+    output_file = open(output_file, 'w')
+    output_file.writelines("%s\n" % J for J in avg_cross_entropy_list)
+    output_file.close()
+    
+def potting_part2():
+    output_file = 'output_files/1_3_plot_pointOOone.csv'
+    train_input = 'handout/largeTrain.csv'
+    test_input = 'handout/largeValidation.csv'
+    num_epoch = 100
+    init_flag = 1
+    hidden_unit_num = 50
+    lr = 0.001
+    #output class number
+    K = 10
+    #Proccess Training Data
+    train_input_data, train_original_labels = parse_dict(train_input)
+    train_labels= convert_one_hot(train_original_labels,K)   
+    #append bias term
+    train_input_data = np.insert(train_input_data, 0, 1,axis=1)
+
+    #Process Testing Data
+    test_input_data, test_original_labels = parse_dict(test_input)
+    test_labels= convert_one_hot(test_original_labels,K)   
+    #append bias term
+    test_input_data = np.insert(test_input_data, 0, 1,axis=1) 
+
+    #initialize parameters
+    feature_num = train_input_data.shape[1]
+    alpha, beta = initialize_params(hidden_unit_num,init_flag,feature_num)
+
+    avg_train_cross_entropy_list = []
+    avg_test_cross_entropy_list = []
+
+    train_example_num = train_input_data.shape[0]
+    test_example_num = test_input_data.shape[0]
+    #training loop 
+    for epoch in range(num_epoch):
+        for example in range(train_example_num):
+            example_data = train_input_data[example,:][np.newaxis,:] 
+            example_label = train_labels[:,example][:,np.newaxis] 
+            forward_object =  NNForward(example_data,example_label,alpha,beta)
+            a,z,b,y_hat,J,beta,example_data,example_label = forward_object
+            # print('example_label shape',example_data.shape)
+            galpha, gbeta = NNBackward(forward_object)
+            alpha = alpha - lr*galpha
+            beta = beta - lr*gbeta
+
+        #analyze loop
+        J_total=0
+        for example in range(train_example_num):
+            example_data = train_input_data[example,:][np.newaxis,:] 
+            example_label = train_labels[:,example][:,np.newaxis] 
+            forward_object =  NNForward(example_data,example_label,alpha,beta)
+            a,z,b,y_hat,J,beta,example_data,example_label = forward_object
+            J_total += J
+        avg_train_cross_entropy_list.append(J_total/train_example_num) 
+
+        J_total=0
+        for example in range(test_example_num):
+            example_data = test_input_data[example,:][np.newaxis,:] 
+            example_label = test_labels[:,example][:,np.newaxis] 
+            forward_object =  NNForward(example_data,example_label,alpha,beta)
+            a,z,b,y_hat,J,beta,example_data,example_label = forward_object
+            J_total += J
+        avg_test_cross_entropy_list.append(J_total/test_example_num) 
+
+
+    output_file = open(output_file, 'w')
+    output_file.writelines('Avg train cross entropy: \n')
+    output_file.writelines("%s " % J for J in avg_train_cross_entropy_list)
+    output_file.writelines('\n  Avg test cross entropy: \n')
+    output_file.writelines("%s " % J for J in avg_test_cross_entropy_list)
+    output_file.close()
+
+
+
+
+
+        
+        
+
+
+
+
+
+
 if __name__ == '__main__':
-    # train_input = 'handout/smallTrain.csv'
-    # test_input = 'handout/smallValidation.csv'
+    # train_input = 'handout/largeTrain.csv'
+    # test_input = 'handout/largeValidation.csv'
     # train_out = 'output_files/train_prediction.labels'
     # test_out = 'output_files/test_predictoin.labels'
     # metrics_out = 'output_files/metrics.txt'
@@ -313,16 +444,16 @@ if __name__ == '__main__':
     # init_flag = 2
     # lr = 0.1
 
-    train_input = sys.argv[1]
-    test_input = sys.argv[2]
-    train_out =  sys.argv[3]
-    test_out = sys.argv[4]
-    metrics_out = sys.argv[5]
-    num_epoch = int(sys.argv[6])
-    hidden_unit_num = int(sys.argv[7])
-    init_flag = int(sys.argv[8])
-    lr = float(sys.argv[9])
+    # train_input = sys.argv[1]
+    # test_input = sys.argv[2]
+    # train_out =  sys.argv[3]
+    # test_out = sys.argv[4]
+    # metrics_out = sys.argv[5]
+    # num_epoch = int(sys.argv[6])
+    # hidden_unit_num = int(sys.argv[7])
+    # init_flag = int(sys.argv[8])
+    # lr = float(sys.argv[9])
 
-    main(train_input, test_input, train_out,test_out,metrics_out,num_epoch, hidden_unit_num, init_flag, lr)
+    # main(train_input, test_input, train_out,test_out,metrics_out,num_epoch, hidden_unit_num, init_flag, lr)
 
-    # main(train_input, num_epoch, hidden_unit_num, init_flag, lr)
+    potting_part2()
