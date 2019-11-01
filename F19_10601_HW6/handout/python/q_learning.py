@@ -6,7 +6,11 @@ import numpy as np
 
 def find_best_action(q_all,epsilon):
     # need to incorporate random sampling here    
-    return np.argmax(q_all)
+    prob = np.random.rand(1)[0]
+    if prob<= 1-epsilon:
+        return np.argmax(q_all)
+    else:
+        return np.random.random_integers(0,2)
 
 
 
@@ -18,8 +22,7 @@ def update_weight(W,q_all, best_action,lr,gamma,reward,curr_state,sys):
     W_grad = np.zeros((sys.state_space+1,3))
     W_grad[:,best_action] = np.transpose(curr_state)
     # print(q)
-    print(W_grad)
-    W = W-lr*(q-(reward + gamma*max(q_all_future)))*W_grad*q
+    W = W-lr*(q-(reward + gamma*max(q_all_future)))*W_grad
 
     return W
 
@@ -44,7 +47,7 @@ def main( mode , episodes, max_iterations, epsilon, gamma, lr):
             if done:
                 return W
             W = update_weight(W,q_all, best_action,lr,gamma,reward,curr_state,sys)
-        print(W)
+    print(W)
     return W
 
 
