@@ -306,6 +306,7 @@ def main(train_input, test_input, train_out,test_out,metrics_out,num_epoch, hidd
 def plotting_part1():
     output_file = 'output_files/1_2_plot.csv'
     train_input = 'handout/largeTrain.csv'
+    test_input = 'handout/largeValidation.csv'
     num_epoch = 100
     lr = 0.01
     init_flag = 1
@@ -317,8 +318,15 @@ def plotting_part1():
     #append bias term
     train_input_data = np.insert(train_input_data, 0, 1,axis=1)
 
+    #Process Testing Data
+    test_input_data, test_original_labels = parse_dict(test_input)
+    test_labels= convert_one_hot(test_original_labels,K)   
+    #append bias term
+    test_input_data = np.insert(test_input_data, 0, 1,axis=1) 
+
     hidden_unit_list = [5,20,50,100,200]
-    avg_cross_entropy_list = []
+    train_avg_cross_entropy_list = []
+    test_avg_cross_entropy_list=[]
     for hidden_unit_num in hidden_unit_list: 
         #initialize parameters
         feature_num = train_input_data.shape[1]
@@ -338,6 +346,8 @@ def plotting_part1():
                 beta = beta - lr*gbeta
         
         #analyze loop
+
+        #Method 1 Training cross entropy 
         J_total=0
         for example in range(example_num):
             example_data = train_input_data[example,:][np.newaxis,:] 
@@ -345,11 +355,30 @@ def plotting_part1():
             forward_object =  NNForward(example_data,example_label,alpha,beta)
             a,z,b,y_hat,J,beta,example_data,example_label = forward_object
             J_total += J
-        avg_cross_entropy_list.append(J_total/example_num) 
+        train_avg_cross_entropy_list.append(J_total/example_num) 
+
+
+        J_total=0
+        test_example_num = test_input_data.shape[0]
+        for example in range(test_example_num):
+            example_data = test_input_data[example,:][np.newaxis,:] 
+            example_label = test_labels[:,example][:,np.newaxis] 
+            forward_object =  NNForward(example_data,example_label,alpha,beta)
+            a,z,b,y_hat,J,beta,example_data,example_label = forward_object
+            J_total += J
+        test_avg_cross_entropy_list.append(J_total/test_example_num) 
+        
+        #Metho 2 (Not sure if is correct)
+        # (a,z,b,train_prediction,J,beta,example_data,example_label) = NNForward(train_input_data,train_labels,alpha,beta)
+        # avg_cross_entropy_list.append(J)
 
     output_file = open(output_file, 'w')
-    output_file.writelines("%s\n" % J for J in avg_cross_entropy_list)
+    output_file.writelines('Avg train cross entropy: \n')
+    output_file.writelines("%s " % J for J in train_avg_cross_entropy_list)
+    output_file.writelines('\n  Avg test cross entropy: \n')
+    output_file.writelines("%s " % J for J in test_avg_cross_entropy_list)
     output_file.close()
+
     
 def potting_part2():
     output_file = 'output_files/1_3_plot_pointOOone.csv'
@@ -455,5 +484,5 @@ if __name__ == '__main__':
     # lr = float(sys.argv[9])
 
     # main(train_input, test_input, train_out,test_out,metrics_out,num_epoch, hidden_unit_num, init_flag, lr)
-
-    potting_part2()
+    plotting_part1()
+    # potting_part2()
