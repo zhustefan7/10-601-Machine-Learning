@@ -1,4 +1,4 @@
-from __future__ import division
+om __future__ import division
 from collections import OrderedDict 
 import numpy as np
 import math
@@ -452,6 +452,20 @@ def potting_part2():
 
 
 
+def written_q3():
+    lr =1 
+    alpha = np.array([[1,1,2,-3,0,1,-3],[1,3,1,2,1,0,2],[1,2,2,2,2,2,1],[1,1,0,2,1,-2,2]])
+    beta = np.array([[1,1,2,-2,1],[1,1,-1,1,2],[1,3,1,-1,1]])
+    example_data = np.array([1,1,1,0,0,1,1])[np.newaxis,:] 
+    print(example_data.shape)
+    example_label = np.array([0,1,0])[:,np.newaxis] 
+    forward_object =  NNForward(example_data,example_label,alpha,beta)
+    a,z,b,y_hat,J,beta,example_data,example_label = forward_object
+    galpha, gbeta = NNBackward(forward_object)
+    alpha = alpha - lr*galpha
+    beta = beta - lr*gbeta
+    print(alpha)
+    print(alpha[1,0])
 
 
         
@@ -486,3 +500,5 @@ if __name__ == '__main__':
     # main(train_input, test_input, train_out,test_out,metrics_out,num_epoch, hidden_unit_num, init_flag, lr)
     plotting_part1()
     # potting_part2()
+
+    written_q3()
