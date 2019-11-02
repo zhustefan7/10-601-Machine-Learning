@@ -16,24 +16,27 @@ def find_best_action(q_all,epsilon):
 
 
 
-def convert_state_to_vector(state_dict):
-    state = np.zeros(2048,)
-    for key in state_dict:
-        state[key] = 1
+def convert_state_to_vector(state_dict,mode):  
+    if mode == 'raw':
+        state = np.zeros(2)
+        for key ,value in state_dict.items():
+            state[key] = value
+
+    elif mode == 'tile':
+        state = np.zeros(2048,)
+        for key in state_dict:
+            state[key] = 1
+
     return state
 
 
 
 
-def update_weight(mode,W,b,q_all, best_action,lr,gamma,reward,curr_state,sys):
+def update_weight(mode,W,b,q_all, best_action,lr,gamma,reward,curr_state,future_state):
     q = q_all[best_action]
-    future_state = sys.state
-    if mode == 'tile':  
-        future_state = sys.transform(future_state)
-        future_state = convert_state_to_vector(future_state)
 
     q_all_future = np.transpose(future_state).dot(W)+b
-    W_grad = np.zeros((sys.state_space,3))
+    W_grad = np.zeros((curr_state.shape[0],3))
     W_grad[:,best_action] = np.transpose(curr_state)
     W = W-lr*(q-(reward + gamma*max(q_all_future)))*W_grad
     b = b-lr*(q-(reward + gamma*max(q_all_future)))
@@ -54,23 +57,31 @@ def main( mode , episodes, max_iterations, epsilon, gamma, lr, weight_out,return
 
     for i in range(episodes):
         return_out = 0
+        curr_state = sys.reset()
+        curr_state = convert_state_to_vector(curr_state,mode)
         for itr in range(max_iterations):
-            if mode == 'raw':
-                curr_state = sys.state
-            elif mode == 'tile':
-                curr_state = sys.transform(sys.state)
-                curr_state = convert_state_to_vector(curr_state)
+            # print(itr)
+            # print(curr_state)
+            # if mode == 'raw':
+            #     curr_state = sys.state
+            # elif mode == 'tile':
+            #     curr_state = sys.transform(sys.state)
+            #     curr_state = convert_state_to_vector(curr_state)
                 
             q_all = np.transpose(curr_state).dot(W)+b
             best_action =find_best_action(q_all,epsilon)
-            _, reward, done = sys.step(best_action)
-
+            future_state, reward, done = sys.step(best_action)
+            future_state = convert_state_to_vector(future_state,mode)
+            # print('future state', future_state)
             return_out +=reward
 
             if done:
                 sys.reset()
                 break
-            W ,b= update_weight(mode,W,b,q_all, best_action,lr,gamma,reward,curr_state,sys)
+
+            W ,b= update_weight(mode,W,b,q_all, best_action,lr,gamma,reward,curr_state,future_state)
+            curr_state = future_state
+
         returns_out_list.append(return_out) 
 
     
@@ -87,7 +98,6 @@ def main( mode , episodes, max_iterations, epsilon, gamma, lr, weight_out,return
     returns_out.close()
 
     print(W)
-    print(W.shape)
     print(b)
     return 
 
@@ -114,5 +124,4 @@ if __name__ == "__main__":
 
 
 
-    main(mode , episodes, max_iterations, epsilon, gamma, lr, weight_out, returns_out   )
-    # print(W)  
+    main(mode , episodes, max_iterations, epsilon, gamma, lr, weight_out, returns_out)
