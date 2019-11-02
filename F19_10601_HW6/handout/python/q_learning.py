@@ -60,14 +60,6 @@ def main( mode , episodes, max_iterations, epsilon, gamma, lr, weight_out,return
         curr_state = sys.reset()
         curr_state = convert_state_to_vector(curr_state,mode)
         for itr in range(max_iterations):
-            # print(itr)
-            # print(curr_state)
-            # if mode == 'raw':
-            #     curr_state = sys.state
-            # elif mode == 'tile':
-            #     curr_state = sys.transform(sys.state)
-            #     curr_state = convert_state_to_vector(curr_state)
-                
             q_all = np.transpose(curr_state).dot(W)+b
             best_action =find_best_action(q_all,epsilon)
             future_state, reward, done = sys.step(best_action)
