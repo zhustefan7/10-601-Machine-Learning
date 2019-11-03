@@ -67,12 +67,11 @@ def main( mode , episodes, max_iterations, epsilon, gamma, lr, weight_out,return
             # print('future state', future_state)
             return_out +=reward
 
-            if done:
-                sys.reset()
-                break
-
             W ,b= update_weight(mode,W,b,q_all, best_action,lr,gamma,reward,curr_state,future_state)
             curr_state = future_state
+            if done:           
+                # sys.reset()
+                break
 
         returns_out_list.append(return_out) 
 
