@@ -55,10 +55,9 @@ def main( mode , episodes, max_iterations, epsilon, gamma, lr, weight_out,return
     rolling_mean_out_list = []
     W = np.zeros((sys.state_space,3))   
     b= 0 
-    rolling_sum = 0
 
 
-    for i in range(1,episodes+1):
+    for i in range(0,episodes):
         print('episodes: %s' %i)
         return_out = 0
         curr_state = sys.reset()
@@ -79,12 +78,20 @@ def main( mode , episodes, max_iterations, epsilon, gamma, lr, weight_out,return
 
         returns_out_list.append(return_out) 
 
-        rolling_sum+=return_out
-        print('rolling_sum',rolling_sum)
-        if i%25==0:
-            print(1)
-            rolling_mean_out_list.append(rolling_sum/25)
-            rolling_sum=0
+
+
+    for i in range(len(returns_out_list)):
+        print(i)
+        if i <25:
+            rolling_mean_out_list.append(np.mean(returns_out_list[:i+1]))
+        else:
+            rolling_mean_out_list.append(np.mean(returns_out_list[i-25:i]))
+        # rolling_sum+=return_out
+        # print('rolling_sum',rolling_sum)
+        # if i%25==0:
+        #     print(1)
+        #     rolling_mean_out_list.append(rolling_sum/25)
+        #     rolling_sum=0
 
     
     #writing to the weight out file 
@@ -110,26 +117,26 @@ def main( mode , episodes, max_iterations, epsilon, gamma, lr, weight_out,return
 
 if __name__ == "__main__":
     ##plot1
-    mode = 'raw'
-    weight_out  = 'output/weight_out_plotting1.out'
-    returns_out = 'output/returns_out_plotting1.out'
-    episodes = 2000
-    max_iterations = 200
-    epsilon = 0.05
-    gamma  = 0.999
-    lr = 0.001
-
-
-
-    ##plot2
-    # mode = 'tile'
-    # weight_out  = 'output/weight_out_plotting2.out'
-    # returns_out = 'output/returns_out_plotting2.out'
-    # episodes = 400
+    # mode = 'raw'
+    # weight_out  = 'output/weight_out_plotting1.out'
+    # returns_out = 'output/returns_out_plotting1.out'
+    # episodes = 2000
     # max_iterations = 200
     # epsilon = 0.05
-    # gamma  = 0.99
-    # lr = 0.00005
+    # gamma  = 0.999
+    # lr = 0.001
+
+
+
+    #plot2
+    mode = 'tile'
+    weight_out  = 'output/weight_out_plotting2.out'
+    returns_out = 'output/returns_out_plotting2.out'
+    episodes = 400
+    max_iterations = 200
+    epsilon = 0.05
+    gamma  = 0.99
+    lr = 0.00005
 
     # mode = sys.argv[1]
     # weight_out  = sys.argv[2]
