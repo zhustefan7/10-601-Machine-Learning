@@ -52,11 +52,14 @@ def main( mode , episodes, max_iterations, epsilon, gamma, lr, weight_out,return
     sys = MountainCar(mode) 
     #initialize states. add one extra dimensions in row for bias term
     returns_out_list = []
+    rolling_mean_out_list = []
     W = np.zeros((sys.state_space,3))   
     b= 0 
+    rolling_sum = 0
 
 
-    for i in range(episodes):
+    for i in range(1,episodes+1):
+        print('episodes: %s' %i)
         return_out = 0
         curr_state = sys.reset()
         curr_state = convert_state_to_vector(curr_state,mode)
@@ -76,6 +79,13 @@ def main( mode , episodes, max_iterations, epsilon, gamma, lr, weight_out,return
 
         returns_out_list.append(return_out) 
 
+        rolling_sum+=return_out
+        print('rolling_sum',rolling_sum)
+        if i%25==0:
+            print(1)
+            rolling_mean_out_list.append(rolling_sum/25)
+            rolling_sum=0
+
     
     #writing to the weight out file 
     flattened_W = np.ndarray.flatten(W)
@@ -86,9 +96,12 @@ def main( mode , episodes, max_iterations, epsilon, gamma, lr, weight_out,return
 
     #writing to the return out file
     returns_out = open(returns_out,'w')
-    returns_out.writelines("%s\n" % r for r in returns_out_list)
+    returns_out.writelines("%s " % r for r in returns_out_list)
     returns_out.close()
 
+    rolling_mean_out = open('output/rolling_mean_plotting1.out','w')
+    rolling_mean_out.writelines(("%s " % r for r in rolling_mean_out_list))
+    rolling_mean_out.close()
     print(W)
     print(b)
     return 
@@ -96,23 +109,36 @@ def main( mode , episodes, max_iterations, epsilon, gamma, lr, weight_out,return
 
 
 if __name__ == "__main__":
-    # mode = 'raw'
-    # weight_out  = 'output/weight_out.out'
-    # returns_out = 'output/returns_out.out'
-    # episodes = 4
+    ##plot1
+    mode = 'raw'
+    weight_out  = 'output/weight_out_plotting1.out'
+    returns_out = 'output/returns_out_plotting1.out'
+    episodes = 2000
+    max_iterations = 200
+    epsilon = 0.05
+    gamma  = 0.999
+    lr = 0.001
+
+
+
+    ##plot2
+    # mode = 'tile'
+    # weight_out  = 'output/weight_out_plotting2.out'
+    # returns_out = 'output/returns_out_plotting2.out'
+    # episodes = 400
     # max_iterations = 200
     # epsilon = 0.05
     # gamma  = 0.99
-    # lr = 0.01
+    # lr = 0.00005
 
-    mode = sys.argv[1]
-    weight_out  = sys.argv[2]
-    returns_out = sys.argv[3]
-    episodes = int(sys.argv[4])
-    max_iterations = int(sys.argv[5])
-    epsilon = float(sys.argv[6])
-    gamma  = float(sys.argv[7])
-    lr = float(sys.argv[8])
+    # mode = sys.argv[1]
+    # weight_out  = sys.argv[2]
+    # returns_out = sys.argv[3]
+    # episodes = int(sys.argv[4])
+    # max_iterations = int(sys.argv[5])
+    # epsilon = float(sys.argv[6])
+    # gamma  = float(sys.argv[7])
+    # lr = float(sys.argv[8])
 
 
 
