@@ -1,7 +1,33 @@
 import numpy as np
 from collections import OrderedDict 
-from learnhmm import parse_data,parse_dict
+# from learnhmm import parse_data,parse_dict
 import sys
+
+def parse_dict(dict_input):
+    dictionary = OrderedDict()
+    input_file = open(dict_input , 'r')
+    # out = input_file.readlines()
+    counter = 0
+    for word in input_file:
+        word = word.rstrip()
+        dictionary[word]=counter
+        counter+=1
+    return dictionary
+
+def parse_data(train_words_path):
+    tags = []
+    words = []
+    input_file = open(train_words_path , 'r')
+    for line in input_file:
+        line_words = []
+        line_tags = []
+        for couple in line.split():
+            temp=couple.split('_')
+            line_words.append(temp[0])
+            line_tags.append(temp[1])
+        words.append(line_words)
+        tags.append(line_tags)
+    return words , tags
 
 
 
@@ -25,6 +51,41 @@ def parse_prior(hmmprior):
         pi.append(float(line))
     # print(pi)
     return pi
+
+def write_2Dlist_to_file(file_path, input_list):
+    out = open(file_path,'w')
+    for i in range(len(input_list)):
+        for j in range(len(input_list[i])):
+            if j == len(input_list[i])-1:
+                out.write("%s" % input_list[i][j])
+            else:
+                out.write("%s " % input_list[i][j])
+        out.write('\n')
+    out.close()
+
+
+
+def convert_predictions_format(predictions,words):
+    output = []
+    for i in range(len(predictions)):
+        temp_output = []
+        for j in range(len(predictions[i])):
+            temp_output.append(words[i][j]+'_'+predictions[i][j])
+        output.append(temp_output)
+    return output
+
+
+def get_accuracy(predictions,tags):
+    total = 0
+    correct = 0
+    for i in range(len(predictions)):
+        for j in range(len(predictions[i])):
+            total+=1
+            if predictions[i][j] == tags[i][j]:
+                correct +=1
+    return correct/float(total)
+    
+
 
 def get_prediction(w,p,seq_len,tag_to_index):
     # print('w',w)
@@ -70,35 +131,54 @@ def viterbi(index_to_word,index_to_tag,words,state_num,a,b,pi):
                 p[j,t] = np.argmax(b[j,i]*a[:,j]*w[:,t-1])
         
         curr_prediction = get_prediction(w,p,len(seq),tag_to_index)
-        # print('curr prediction', curr_prediction)
 
         predictions.append(curr_prediction)
-    print(predictions[2])
+    return predictions
+
             
                 
-            
+             
 
 
-def main(index_to_word_path, index_to_tag_path,test_input,hmmprior,hmmemit,hmmtrans):
+def main(index_to_word_path, index_to_tag_path,test_input,hmmprior,hmmemit,hmmtrans,predicted_file,metric_file):
     index_to_word = parse_dict(index_to_word_path)
     index_to_tag = parse_dict(index_to_tag_path)
     words,tags = parse_data(test_input)
     a = parse_prob_matrix(hmmtrans)
     b = parse_prob_matrix(hmmemit)
     pi =parse_prior(hmmprior)
-    # print('a',a)
-    # print('b',b)
-    # print('pi',pi)
     state_num = len(index_to_tag)
-    viterbi(index_to_word,index_to_tag,words,state_num,a,b,pi)
+    predictions = viterbi(index_to_word,index_to_tag,words,state_num,a,b,pi)
+    output = convert_predictions_format(predictions,words)
+    accuracy=get_accuracy(predictions,tags)
+    write_2Dlist_to_file(predicted_file,output)
+
+    metric_file = open(metric_file,'w')
+    metric_file.write('Accuracy: %0.6f' %accuracy)
+    metric_file.close()
 
 
 
 
 if __name__ == '__main__':
-    test_input = 'handout/fulldata/testwords.txt'
-    index_to_word_path = 'handout/fulldata/index_to_word.txt'
-    index_to_tag_path = 'handout/fulldata/index_to_tag.txt'
+    # test_input = 'handout/fulldata/testwords.txt'
+    # index_to_word_path = 'handout/fulldata/index_to_word.txt'
+    # index_to_tag_path = 'handout/fulldata/index_to_tag.txt'
+    # hmmprior = 'output/hmmprior.txt'
+    # hmmemit = 'output/hmmemit.txt'
+    # hmmtrans = 'output/hmmtrans.txt'
+    # predicted_file = 'output/predicted.txt'
+    # metric_file = 'output/metrics.txt'
+    
+
+    test_input = sys.argv[1]
+    index_to_word_path = sys.argv[2]
+    index_to_tag_path = sys.argv[3]
+    hmmprior = sys.argv[4]
+    hmmemit = sys.argv[5]
+    hmmtrans = sys.argv[6]
+    predicted_file = sys.argv[7]
+    metric_file = sys.argv[8]
 
     # index_to_word_path = 'handout/toydata/toy_index_to_word.txt'
     # index_to_tag_path = 'handout/toydata/toy_index_to_tag.txt'
@@ -106,8 +186,5 @@ if __name__ == '__main__':
 
 
 
-    hmmprior = 'output/hmmprior.txt'
-    hmmemit = 'output/hmmemit.txt'
-    hmmtrans = 'output/hmmtrans.txt'
 
-    main(index_to_word_path, index_to_tag_path,test_input,hmmprior,hmmemit,hmmtrans)
+    main(index_to_word_path, index_to_tag_path,test_input,hmmprior,hmmemit,hmmtrans,predicted_file,metric_file)
