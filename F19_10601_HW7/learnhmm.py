@@ -44,7 +44,6 @@ def learn_transition_prob(index_to_tag,tags):
                 col_num = index_to_tag[line[i+1]]
                 a[row_num,col_num] +=1
     a = a + add_one
-    # print(a)
     for row in range(dim):
         row_sum = sum(a[row,:])
         for col in range(dim):
@@ -111,6 +110,8 @@ def main(index_to_word_path, index_to_tag_path, train_words,hmmprior,hmmemit,hmm
     index_to_word = parse_dict(index_to_word_path)
     index_to_tag = parse_dict(index_to_tag_path)
     words , tags = parse_data(train_words_path)
+    tags = tags[0:10000]
+    print(len(tags))
     a = learn_transition_prob(index_to_tag,tags)
     b= learn_emission_prob(index_to_tag,index_to_word,tags,words)
     pi = learn_initial_prob(tags,index_to_tag)
@@ -127,23 +128,23 @@ def main(index_to_word_path, index_to_tag_path, train_words,hmmprior,hmmemit,hmm
 
 
 if __name__ == '__main__':
-    # train_words_path = 'handout/fulldata/trainwords.txt'
-    # index_to_word_path = 'handout/fulldata/index_to_word.txt'
-    # index_to_tag_path = 'handout/fulldata/index_to_tag.txt'
-    # hmmprior = 'output/hmmprior.txt'
-    # hmmemit = 'output/hmmemit.txt'
-    # hmmtrans = 'output/hmmtrans.txt'
+    train_words_path = 'handout/fulldata/trainwords.txt'
+    index_to_word_path = 'handout/fulldata/index_to_word.txt'
+    index_to_tag_path = 'handout/fulldata/index_to_tag.txt'
+    hmmprior = 'output/hmmprior_10000.txt'
+    hmmemit = 'output/hmmemit_10000.txt'
+    hmmtrans = 'output/hmmtrans_10000.txt'
 
     # index_to_word_path = 'handout/toydata/toy_index_to_word.txt'
     # index_to_tag_path = 'handout/toydata/toy_index_to_tag.txt'
     # train_words_path = 'handout/toydata/toytrain.txt'
 
-    train_words_path = sys.argv[1]
-    index_to_word_path = sys.argv[2]
-    index_to_tag_path = sys.argv[3]
-    hmmprior = sys.argv[4]
-    hmmemit = sys.argv[5]
-    hmmtrans = sys.argv[6]
+    # train_words_path = sys.argv[1]
+    # index_to_word_path = sys.argv[2]
+    # index_to_tag_path = sys.argv[3]
+    # hmmprior = sys.argv[4]
+    # hmmemit = sys.argv[5]
+    # hmmtrans = sys.argv[6]
 
 
     main(index_to_word_path, index_to_tag_path,train_words_path,hmmprior,hmmemit,hmmtrans)

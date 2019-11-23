@@ -120,15 +120,18 @@ def viterbi(index_to_word,index_to_tag,words,state_num,a,b,pi):
 
         for j in range(state_num):
             i = index_to_word[seq[0]]
-            w[j,0] = pi[j]*b[j,i]
+            w[j,0] = np.log(pi[j]*b[j,i])
             p[j,0] = j
         
         
         for t in range(1,len(seq)):
             for j in range(state_num):
                 i = index_to_word[seq[t]]
-                w[j,t] = np.max(b[j,i]*a[:,j]*w[:,t-1])
-                p[j,t] = np.argmax(b[j,i]*a[:,j]*w[:,t-1])
+                val = np.log(b[j,i]) + np.log(a[:,j]) + w[:,t-1]
+                # w[j,t] = np.max(b[j,i]*a[:,j]*w[:,t-1])
+                # p[j,t] = np.argmax(b[j,i]*a[:,j]*w[:,t-1])
+                w[j,t] = np.max(val)
+                p[j,t] = np.argmax(val)
         
         curr_prediction = get_prediction(w,p,len(seq),tag_to_index)
 
@@ -159,6 +162,54 @@ def main(index_to_word_path, index_to_tag_path,test_input,hmmprior,hmmemit,hmmtr
 
 
 
+def plot():
+    train_input = 'handout/fulldata/trainwords.txt'
+    test_input = 'handout/fulldata/testwords.txt'
+    index_to_word_path = 'handout/fulldata/index_to_word.txt'
+    index_to_tag_path = 'handout/fulldata/index_to_tag.txt'
+    hmmprior_list = ['output/hmmprior_10.txt','output/hmmprior_100.txt','output/hmmprior_1000.txt','output/hmmprior_10000.txt']
+    hmmtrans_list = ['output/hmmtrans_10.txt','output/hmmtrans_100.txt','output/hmmtrans_1000.txt','output/hmmtrans_10000.txt']
+    hmmemit_list = ['output/hmmemit_10.txt','output/hmmemit_100.txt','output/hmmemit_1000.txt','output/hmmemit_10000.txt']
+   
+
+    index_to_word = parse_dict(index_to_word_path)
+    index_to_tag = parse_dict(index_to_tag_path)
+
+    test_words,test_tags = parse_data(test_input)
+    train_words,train_tags = parse_data(train_input)
+    
+    train_accuracies = []
+    test_accuracies = []
+
+    for i in range(4):
+
+        hmmtrans = hmmtrans_list[i]
+        hmmemit = hmmemit_list[i]
+        hmmprior = hmmprior_list[i]
+
+        a = parse_prob_matrix(hmmtrans)
+        b = parse_prob_matrix(hmmemit)
+        pi =parse_prior(hmmprior)
+        state_num = len(index_to_tag)
+
+        train_predictions = viterbi(index_to_word,index_to_tag,train_words,state_num,a,b,pi)
+        train_accuracy=get_accuracy(train_predictions,train_tags)
+
+        test_predictions = viterbi(index_to_word,index_to_tag,test_words,state_num,a,b,pi)
+        test_accuracy=get_accuracy(test_predictions,test_tags)
+
+        train_accuracies.append(train_accuracy)
+        test_accuracies.append(test_accuracy)
+    
+
+    print('training accuracy:', train_accuracies)
+    print('test accuracy', test_accuracies)
+    
+
+
+
+
+
 
 if __name__ == '__main__':
     # test_input = 'handout/fulldata/testwords.txt'
@@ -169,16 +220,16 @@ if __name__ == '__main__':
     # hmmtrans = 'output/hmmtrans.txt'
     # predicted_file = 'output/predicted.txt'
     # metric_file = 'output/metrics.txt'
-    
+    plot()
 
-    test_input = sys.argv[1]
-    index_to_word_path = sys.argv[2]
-    index_to_tag_path = sys.argv[3]
-    hmmprior = sys.argv[4]
-    hmmemit = sys.argv[5]
-    hmmtrans = sys.argv[6]
-    predicted_file = sys.argv[7]
-    metric_file = sys.argv[8]
+    # test_input = sys.argv[1]
+    # index_to_word_path = sys.argv[2]
+    # index_to_tag_path = sys.argv[3]
+    # hmmprior = sys.argv[4]
+    # hmmemit = sys.argv[5]
+    # hmmtrans = sys.argv[6]
+    # predicted_file = sys.argv[7]
+    # metric_file = sys.argv[8]
 
     # index_to_word_path = 'handout/toydata/toy_index_to_word.txt'
     # index_to_tag_path = 'handout/toydata/toy_index_to_tag.txt'
@@ -187,4 +238,4 @@ if __name__ == '__main__':
 
 
 
-    main(index_to_word_path, index_to_tag_path,test_input,hmmprior,hmmemit,hmmtrans,predicted_file,metric_file)
+    # main(index_to_word_path, index_to_tag_path,test_input,hmmprior,hmmemit,hmmtrans,predicted_file,metric_file)
